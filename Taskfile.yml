@@ -1,0 +1,46 @@
+# https://taskfile.dev
+version: "3"
+
+vars:
+  REQUIRED_TOOLS: docker kind kubectl helm tofu pre-commit gitleaks
+
+tasks:
+  default:
+    desc: List available tasks
+    cmds:
+      - task --list
+    silent: true
+
+  tools:check:
+    desc: Verify required CLI tools are installed
+    cmds:
+      - for: { var: REQUIRED_TOOLS, split: " " }
+        cmd: command -v {{.ITEM}} >/dev/null || (echo "missing - {{.ITEM}}" && exit 1)
+      - echo "all required tools present"
+    silent: true
+
+  setup:
+    desc: Install git hooks (pre-commit + commit-msg)
+    deps: [tools:check]
+    cmds:
+      - pre-commit install --install-hooks
+
+  lint:
+    desc: Run all pre-commit hooks against the whole repository
+    cmds:
+      - pre-commit run --all-files
+
+  secrets:scan:
+    desc: Scan full git history for leaked secrets
+    cmds:
+      - gitleaks git --redact --verbose .
+
+  hooks:update:
+    desc: Bump pinned hook versions (review the diff before committing)
+    cmds:
+      - pre-commit autoupdate
+
+  docs:check:
+    desc: Verify relative links in all Markdown files
+    cmds:
+      - pre-commit run markdown-relative-links --all-files
