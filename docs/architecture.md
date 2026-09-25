@@ -22,7 +22,7 @@ flowchart TB
   end
   kind -- kubeconfig --> argo
   pve -- kubeconfig --> argo
-  argo -- "app-of-apps + overlays (dev / perf / dr)" --> plat & data & apps
+  argo -- "app-of-apps + overlays<br/>(dev / perf / dr)" --> L2
 ```
 
 ## Data flow
