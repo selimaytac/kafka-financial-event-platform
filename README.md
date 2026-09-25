@@ -42,9 +42,9 @@ flowchart LR
     kafka --> down["market data ·<br/>surveillance · post-trade"]
     down --> ch[("ClickHouse<br/>analytics · audit")]
     ch --> graf["Grafana"]
+    gw["Envoy Gateway"] --> graf
   end
   argo -- GitOps --> cluster
-  gw["Envoy Gateway"] --> graf
 ```
 
 More detail: [docs/architecture.md](docs/architecture.md).
