@@ -1,0 +1,40 @@
+# Private assistant / tooling context (never published)
+CLAUDE.md
+CLAUDE.local.md
+.claude/
+.beads/
+
+# Secrets and local environment
+.env*
+*.pem
+*.key
+kubeconfig*
+*.kubeconfig
+
+# OpenTofu
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+.terraform.tfstate.lock.info
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Go
+/bin/
+*.test
+*.out
+coverage.*
+vendor/
+
+# Task
+.task/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
