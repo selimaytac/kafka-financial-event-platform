@@ -1,11 +1,23 @@
 # kafka-financial-event-platform
 
-A stock-exchange event platform on Kubernetes, built to process **one billion
-events end-to-end** with finance-grade governance, operability and resilience.
+**A hands-on learning project:** designing and building an enterprise-style
+stock-exchange event platform on Kubernetes from scratch, one reasoned decision at a time.
 
-The focus is day-2 operation, not just a working demo. That covers policy and audit,
-retention, upgrades, maintenance, and high availability / disaster recovery. Each of
-these is designed as code and documented.
+The technical goal is to process **one billion events end-to-end** with finance-grade
+governance, operability and resilience. The learning goal is to show *why* each decision
+is made (alternatives, trade-offs and failure modes) so the reasoning can be followed
+and reused. The focus is day-2 operation: policy and audit, retention, upgrades,
+maintenance, and high availability / disaster recovery, all designed as code.
+
+## What this is, and what it isn't
+
+| This is | This is not |
+|---|---|
+| A learning journey with every decision recorded, including rejected alternatives | A production exchange or trading system |
+| A local reference setup (kind) that can be studied and reproduced | Certified against, or compliant with, any regulation |
+| A synthetic market with a simplified matching engine | Real market data, real participants or real orders |
+
+Start with the [learning track](docs/learning/README.md) for the concepts behind each phase.
 
 > **Status:** Phase 0 (foundation) complete; Phase 1 (cluster) next. See the [roadmap](#roadmap).
 
@@ -77,6 +89,7 @@ were considered and the trade-offs.
 | CI | GitHub Actions | Native to the repository host; reuses local `task` targets | [0018](docs/adr/0018-use-github-actions-for-ci.md) |
 | Governance | Regulations as reference frameworks | Controls are traceable, with no false compliance claims | [0019](docs/adr/0019-treat-regulations-as-reference-frameworks.md) |
 | Repo hygiene | pre-commit, gitleaks, Conventional Commits, Task | No leaked secrets; readable, attributable history | [0020](docs/adr/0020-enforce-repository-hygiene-with-pre-commit.md) |
+| Documentation | Learning notes separate from operational docs | Each document keeps one purpose (Diátaxis) | [0023](docs/adr/0023-separate-learning-notes-from-operational-docs.md) |
 
 Full index: [docs/adr/](docs/adr/README.md).
 
@@ -113,6 +126,7 @@ Full index: [docs/adr/](docs/adr/README.md).
 
 | Path | Contents |
 |---|---|
+| [docs/learning/](docs/learning/README.md) | Learning path, concept notes and phase retrospectives |
 | [docs/architecture.md](docs/architecture.md) | Layers, data flow, components, profiles |
 | [docs/adr/](docs/adr/README.md) | Architecture Decision Records |
 | [docs/compliance/](docs/compliance/README.md) | Governance approach and control matrix |
@@ -132,11 +146,6 @@ task lint          # run all checks
 ```
 
 Cluster provisioning arrives in Phase 1.
-
-## Disclaimer
-
-This is a learning and portfolio platform using synthetic data. It is not certified
-against any regulation. Controls are *inspired by* and *mapped to* the cited frameworks.
 
 ## License
 
