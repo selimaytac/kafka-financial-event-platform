@@ -16,6 +16,15 @@ resource "kind_cluster" "this" {
 
     node {
       role = "control-plane"
+
+      # Stable entry point: 127.0.0.1:<profile port> -> gateway NodePort. A random
+      # load-balancer port would break OIDC redirect URLs (ADR 0035).
+      extra_port_mappings {
+        container_port = var.gateway_node_port
+        host_port      = var.gateway_host_port
+        listen_address = "127.0.0.1"
+        protocol       = "TCP"
+      }
     }
 
     dynamic "node" {

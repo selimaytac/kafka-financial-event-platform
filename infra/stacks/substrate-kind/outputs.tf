@@ -5,6 +5,11 @@ output "substrate" {
   value       = "kind"
 }
 
+output "gateway_url_port" {
+  description = "Host port for https://<name>.<domain>:<port>."
+  value       = var.gateway_host_port
+}
+
 output "cluster_name" {
   value = module.cluster.name
 }
