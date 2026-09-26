@@ -1,0 +1,7 @@
+# Argo CD manages itself after bootstrap (ADR 0028 bootstrap-and-adopt, ADR 0030).
+# SSO (Dex) and notifications are not used yet; they are enabled when needed.
+dex:
+  enabled: false
+
+notifications:
+  enabled: false

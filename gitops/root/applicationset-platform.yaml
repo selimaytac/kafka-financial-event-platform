@@ -1,0 +1,47 @@
+# One Application per gitops/platform/<component>/config.yaml (ADR 0030).
+# PROFILE and REVISION are replaced by the root Application's Kustomize patches.
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: platform
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  syncPolicy:
+    # Removing a component directory must not uninstall the CNI or Argo CD by accident.
+    preserveResourcesOnDeletion: true
+  generators:
+    - git:
+        repoURL: https://github.com/selimaytac/kafka-financial-event-platform.git
+        revision: REVISION
+        files:
+          - path: gitops/platform/*/config.yaml
+  template:
+    metadata:
+      name: "{{ .component }}"
+    spec:
+      project: default
+      sources:
+        - repoURL: "{{ .chart.repoURL }}"
+          chart: "{{ .chart.name }}"
+          targetRevision: "{{ .chart.version }}"
+          helm:
+            releaseName: "{{ .component }}"
+            ignoreMissingValueFiles: true
+            valueFiles:
+              - "$values/{{ .path.path }}/values.yaml"
+              - "$values/{{ .path.path }}/values-PROFILE.yaml"
+        - repoURL: https://github.com/selimaytac/kafka-financial-event-platform.git
+          targetRevision: REVISION
+          ref: values
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{ .namespace }}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
