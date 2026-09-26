@@ -2,7 +2,7 @@
 version: "3"
 
 vars:
-  REQUIRED_TOOLS: docker kind kubectl helm tofu pre-commit gitleaks kubeconform
+  REQUIRED_TOOLS: docker kind kubectl helm tofu pre-commit gitleaks kubeconform kyverno
   # Secret zero (ADR 0026): state encryption passphrase in the OS keychain (macOS `security` CLI).
   KEYCHAIN_SERVICE: platform-labs.kafka-financial-event-platform.tofu-state
   STORE_DIR: infra/stacks/foundation/store
@@ -321,3 +321,8 @@ tasks:
     cmds:
       - kubectl -n monitoring get secret grafana-admin -o jsonpath='{.data.admin-password}' | base64 -d; echo
     silent: true
+
+  policies:test:
+    desc: Run behavioural tests for the platform policies with the Kyverno CLI
+    cmds:
+      - scripts/policies_test.sh
