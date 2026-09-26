@@ -35,3 +35,4 @@ Process: [0001](0001-record-architecture-decisions.md) · Template: [template.md
 | 0029 | [Pin Kubernetes through the kind provider, by image digest](0029-pin-kubernetes-through-the-kind-provider.md) | Accepted |
 | 0030 | [Generate Argo CD Applications with ApplicationSets; OpenTofu owns only the root](0030-generate-applications-with-applicationsets.md) | Accepted |
 | 0031 | [Manage repository settings and branch protection as code](0031-manage-repository-settings-as-code.md) | Accepted |
+| 0032 | [Implement the Proxmox + Talos substrate behind the same output contract](0032-implement-the-proxmox-talos-substrate-behind-the-same-contract.md) | Accepted |
