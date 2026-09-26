@@ -169,3 +169,29 @@ resource "kubernetes_secret_v1" "intermediate_ca" {
     "ca.crt"  = data.terraform_remote_state.pki.outputs.root_ca_cert_pem
   }
 }
+
+# Grafana admin credentials (ADR 0026, ADR 0037): generated here so they are stable across
+# renders; a chart-generated password would change on every sync. Moves to the secrets
+# manager later in Phase 2.
+resource "random_password" "grafana_admin" {
+  length  = 32
+  special = false
+}
+
+resource "kubernetes_namespace_v1" "monitoring" {
+  metadata {
+    name = "monitoring"
+  }
+}
+
+resource "kubernetes_secret_v1" "grafana_admin" {
+  metadata {
+    name      = "grafana-admin"
+    namespace = kubernetes_namespace_v1.monitoring.metadata[0].name
+  }
+
+  data = {
+    "admin-user"     = "admin"
+    "admin-password" = random_password.grafana_admin.result
+  }
+}

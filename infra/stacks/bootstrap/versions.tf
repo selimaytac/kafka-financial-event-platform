@@ -10,6 +10,10 @@ terraform {
       source  = "hashicorp/kubernetes"
       version = "~> 3.2"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.9"
+    }
   }
 
   # Partial configuration: scripts/tofu.sh supplies infra/backend.s3.hcl, the key and the endpoint.

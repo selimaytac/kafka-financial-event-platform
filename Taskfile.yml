@@ -304,3 +304,14 @@ tasks:
       - mkdir -p "$(dirname {{.OUT}})"
       - scripts/tofu.sh pki - output -raw root_ca_cert_pem > {{.OUT}}
       - 'echo "written: {{.OUT}}  (curl --cacert {{.OUT}} https://argocd.kfep.localhost:8443/)"'
+
+  grafana:password:
+    desc: "Print the Grafana admin password of a profile: task grafana:password [PROFILE=dev]"
+    vars:
+      PROFILE: '{{.PROFILE | default "dev"}}'
+    env:
+      KUBECONFIG:
+        sh: echo "$HOME/.kube/kfep-{{.PROFILE}}.yaml"
+    cmds:
+      - kubectl -n monitoring get secret grafana-admin -o jsonpath='{.data.admin-password}' | base64 -d; echo
+    silent: true
