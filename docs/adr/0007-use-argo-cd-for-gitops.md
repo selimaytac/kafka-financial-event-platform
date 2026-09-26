@@ -1,6 +1,6 @@
 # 0007. Use Argo CD (app-of-apps) for GitOps
 
-- **Status:** Accepted
+- **Status:** Superseded by [0030](0030-generate-applications-with-applicationsets.md) (pattern only; Argo CD remains the GitOps controller)
 - **Date:** 2026-09-26
 
 ## Context
