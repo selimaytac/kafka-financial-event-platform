@@ -39,9 +39,15 @@ entered maintenance mode in December 2025, and its repository was archived in Ap
 
 - **SeaweedFS** (single-container server mode, S3 API) holds all OpenTofu state except its
   own. A `bucket` with versioning enabled; `use_lockfile = true` on every backend.
-- A small **foundation** stack creates it with the OpenTofu Docker provider. Only the
-  foundation stack keeps local state (encrypted). Losing it is recoverable (`tofu import`
-  or re-create); the data is not affected.
+- Two small **foundation** stacks create it; only they keep local (encrypted) state:
+  - `foundation/store`: the SeaweedFS container and generated credentials (Docker provider).
+  - `foundation/bucket`: the state bucket with versioning (AWS provider against the S3 API),
+    so drift such as suspended versioning shows up in `tofu plan`.
+
+  They are separate because a provider's configuration must be known at plan time: the
+  bucket's provider needs credentials that the store only generates during apply.
+  Losing either local state is recoverable (`tofu import` or re-create); the data is not
+  affected. The bucket is protected with `prevent_destroy`.
 - Data lives on a **host bind mount outside the repository**, not in a Docker-managed
   volume, so it survives a Docker reset and is covered by host backups.
 - The S3 port binds to **127.0.0.1** only.

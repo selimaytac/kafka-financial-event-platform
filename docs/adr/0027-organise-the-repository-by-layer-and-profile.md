@@ -32,8 +32,8 @@ GitOps location:
 
 ```
 infra/modules/<module>/          reusable, no backend or provider configuration
-infra/stacks/<stack>/            one state each (foundation, substrate-kind,
-                                 substrate-proxmox, bootstrap, github)
+infra/stacks/<stack>/            one state each (foundation/store, foundation/bucket,
+                                 substrate-kind, substrate-proxmox, bootstrap, github)
 infra/stacks/<stack>/profiles/<profile>.tfvars
 gitops/root/                     app-of-apps entry point
 gitops/{platform,apps}/<component>/{base,overlays/<profile>}
