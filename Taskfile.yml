@@ -294,3 +294,13 @@ tasks:
     interactive: true
     cmds:
       - scripts/lab.sh purge
+
+  pki:ca-cert:
+    desc: "Write the lab root CA certificate (public, not a secret) for curl --cacert; it is NOT added to any trust store"
+    vars:
+      OUT:
+        sh: echo "${PLATFORM_DATA_DIR:-$HOME/platform-labs-data/kafka-financial-event-platform}/pki/root-ca.pem"
+    cmds:
+      - mkdir -p "$(dirname {{.OUT}})"
+      - scripts/tofu.sh pki - output -raw root_ca_cert_pem > {{.OUT}}
+      - 'echo "written: {{.OUT}}  (curl --cacert {{.OUT}} https://argocd.kfep.localhost:8443/)"'
