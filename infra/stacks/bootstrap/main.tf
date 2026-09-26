@@ -28,6 +28,7 @@ locals {
       values = compact([
         file("${local.platform}/${name}/values.yaml"),
         fileexists("${local.platform}/${name}/values-${var.profile}.yaml") ? file("${local.platform}/${name}/values-${var.profile}.yaml") : "",
+        fileexists("${local.platform}/${name}/values-substrate-${local.cluster.substrate}.yaml") ? file("${local.platform}/${name}/values-substrate-${local.cluster.substrate}.yaml") : "",
       ])
     }
   }
@@ -102,6 +103,7 @@ resource "helm_release" "root" {
                 { op = "replace", path = "/spec/generators/0/git/revision", value = var.target_revision },
                 { op = "replace", path = "/spec/template/spec/sources/1/targetRevision", value = var.target_revision },
                 { op = "replace", path = "/spec/template/spec/sources/0/helm/valueFiles/1", value = "$values/{{ .path.path }}/values-${var.profile}.yaml" },
+                { op = "replace", path = "/spec/template/spec/sources/0/helm/valueFiles/2", value = "$values/{{ .path.path }}/values-substrate-${local.cluster.substrate}.yaml" },
               ])
             }]
           }

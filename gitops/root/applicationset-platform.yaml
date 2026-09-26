@@ -1,5 +1,5 @@
 # One Application per gitops/platform/<component>/config.yaml (ADR 0030).
-# PROFILE and REVISION are replaced by the root Application's Kustomize patches.
+# PROFILE, SUBSTRATE and REVISION are replaced by the root Application's Kustomize patches.
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -32,6 +32,8 @@ spec:
             valueFiles:
               - "$values/{{ .path.path }}/values.yaml"
               - "$values/{{ .path.path }}/values-PROFILE.yaml"
+              # Substrate-specific settings (e.g. Cilium on Talos), isolated in one named file.
+              - "$values/{{ .path.path }}/values-substrate-SUBSTRATE.yaml"
         - repoURL: https://github.com/selimaytac/kafka-financial-event-platform.git
           targetRevision: REVISION
           ref: values
