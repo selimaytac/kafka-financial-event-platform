@@ -10,6 +10,9 @@ configs:
   params:
     # TLS terminates at the platform Gateway (ADR 0035); argocd-server serves plain HTTP inside.
     server.insecure: true
+    # Compare against a server-side dry-run apply, so defaults filled in by the API server
+    # (e.g. Gateway API fields) and mutating webhooks do not show up as permanent drift.
+    controller.diff.server.side: "true"
   repositories:
     # Helm OCI registry for charts published only as OCI artifacts (e.g. Envoy Gateway).
     envoyproxy-oci:
