@@ -16,6 +16,23 @@ data "terraform_remote_state" "substrate" {
   }
 }
 
+# Lab PKI (ADR 0035): only this profile's intermediate CA enters the cluster.
+data "terraform_remote_state" "pki" {
+  backend = "s3"
+
+  config = {
+    bucket                      = "opentofu-state"
+    key                         = "pki/terraform.tfstate"
+    region                      = "us-east-1"
+    endpoints                   = { s3 = var.state_endpoint }
+    use_path_style              = true
+    skip_credentials_validation = true
+    skip_metadata_api_check     = true
+    skip_region_validation      = true
+    skip_requesting_account_id  = true
+  }
+}
+
 locals {
   cluster  = data.terraform_remote_state.substrate.outputs
   platform = "${path.root}/../../../gitops/platform"
@@ -32,6 +49,13 @@ locals {
       ])
     }
   }
+}
+
+provider "kubernetes" {
+  host                   = local.cluster.endpoint
+  cluster_ca_certificate = local.cluster.cluster_ca_certificate
+  client_certificate     = local.cluster.client_certificate
+  client_key             = local.cluster.client_key
 }
 
 provider "helm" {
@@ -100,10 +124,12 @@ resource "helm_release" "root" {
             patches = [{
               target = { kind = "ApplicationSet", name = "platform" }
               patch = yamlencode([
-                { op = "replace", path = "/spec/generators/0/git/revision", value = var.target_revision },
-                { op = "replace", path = "/spec/template/spec/sources/1/targetRevision", value = var.target_revision },
-                { op = "replace", path = "/spec/template/spec/sources/0/helm/valueFiles/1", value = "$values/{{ .path.path }}/values-${var.profile}.yaml" },
-                { op = "replace", path = "/spec/template/spec/sources/0/helm/valueFiles/2", value = "$values/{{ .path.path }}/values-substrate-${local.cluster.substrate}.yaml" },
+                { op = "replace", path = "/spec/generators/0/matrix/generators/0/git/revision", value = var.target_revision },
+                {
+                  op    = "replace"
+                  path  = "/spec/generators/0/matrix/generators/1/list/elements/0"
+                  value = { profile = var.profile, substrate = local.cluster.substrate, revision = var.target_revision }
+                },
               ])
             }]
           }
@@ -118,4 +144,28 @@ resource "helm_release" "root" {
       }
     }
   })]
+}
+
+# The issuing CA for cert-manager. The namespace is created here because the secret must
+# exist before cert-manager's ClusterIssuer can become ready; Argo CD's CreateNamespace
+# then finds it in place.
+resource "kubernetes_namespace_v1" "cert_manager" {
+  metadata {
+    name = "cert-manager"
+  }
+}
+
+resource "kubernetes_secret_v1" "intermediate_ca" {
+  metadata {
+    name      = "kfep-intermediate-ca"
+    namespace = kubernetes_namespace_v1.cert_manager.metadata[0].name
+  }
+
+  type = "kubernetes.io/tls"
+
+  data = {
+    "tls.crt" = data.terraform_remote_state.pki.outputs.intermediates[var.profile].cert_chain_pem
+    "tls.key" = data.terraform_remote_state.pki.outputs.intermediates[var.profile].private_key_pem
+    "ca.crt"  = data.terraform_remote_state.pki.outputs.root_ca_cert_pem
+  }
 }
