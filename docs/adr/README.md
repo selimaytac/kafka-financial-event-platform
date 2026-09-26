@@ -27,3 +27,4 @@ Process: [0001](0001-record-architecture-decisions.md) · Template: [template.md
 | 0021 | [Model a MiFID II-style regulated equity market](0021-model-a-mifid-style-regulated-equity-market.md) | Accepted |
 | 0022 | [Build a deterministic price-time priority matching engine on Kafka](0022-build-a-deterministic-price-time-matching-engine.md) | Accepted |
 | 0023 | [Present the repository as a learning project and separate learning notes from operational docs](0023-separate-learning-notes-from-operational-docs.md) | Accepted |
+| 0024 | [Protect `main` with a ruleset and pin all third-party code by commit SHA](0024-protect-main-and-pin-third-party-code.md) | Accepted |

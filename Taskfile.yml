@@ -36,9 +36,9 @@ tasks:
       - gitleaks git --redact --verbose .
 
   hooks:update:
-    desc: Bump pinned hook versions (review the diff before committing)
+    desc: Bump hooks and pin them to commit SHAs (review the diff; autoupdate only sees tags on each repo's default branch)
     cmds:
-      - pre-commit autoupdate
+      - pre-commit autoupdate --freeze
 
   docs:check:
     desc: Verify relative links in all Markdown files
