@@ -160,3 +160,11 @@ tasks:
           tofu -chdir="$work/$dir" init -backend=false -input=false >/dev/null
           tofu -chdir="$work/$dir" validate -no-color
         done
+
+  tofu:
+    desc: "Run OpenTofu on a remote-state stack: task tofu STACK=<stack> [PROFILE=<profile>] -- <command> [args]"
+    interactive: true
+    requires:
+      vars: [STACK]
+    cmds:
+      - scripts/tofu.sh {{.STACK}} {{.PROFILE | default "-"}} {{.CLI_ARGS}}

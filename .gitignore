@@ -38,3 +38,6 @@ vendor/
 .idea/
 .vscode/
 *.swp
+
+# Per-profile OpenTofu data directories (scripts/tofu.sh)
+.terraform-*/
