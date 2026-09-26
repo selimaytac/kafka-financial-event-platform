@@ -16,9 +16,10 @@ import {
 }
 
 resource "github_repository" "this" {
-  name        = var.repository
-  description = "A hands-on learning project: designing an enterprise-style stock-exchange event platform on Kubernetes from scratch (Kafka/Strimzi, deterministic matching engine, GitOps, governance, HA/DR), with every decision explained."
-  visibility  = "public"
+  name         = var.repository
+  description  = "A hands-on learning project: designing an enterprise-style stock-exchange event platform on Kubernetes from scratch (Kafka/Strimzi, deterministic matching engine, GitOps, governance, HA/DR), with every decision explained."
+  homepage_url = "https://selimaytac.github.io/kafka-financial-event-platform-docs/"
+  visibility   = "public"
   topics = [
     "argocd", "clickhouse", "event-driven", "fintech", "gitops", "kafka", "kraft",
     "kubernetes", "matching-engine", "opentofu", "platform-engineering", "strimzi",
