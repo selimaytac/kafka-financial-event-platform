@@ -14,7 +14,7 @@ and to show *why* each decision is made so the reasoning can be followed and reu
 | Phase | Concepts | Notes |
 |---|---|---|
 | 0 · Foundation | Decision records, shift-left repository hygiene, supply-chain pinning, regulatory mapping, documentation types | [Retro](retros/phase-0.md) |
-| 1 · Cluster | Infrastructure-as-code state (backend, locking, encryption), the bootstrap problem, secret zero, layered provisioning, GitOps reconciliation | [OpenTofu state](concepts/opentofu-state.md) · [Secret zero](concepts/secret-zero.md) · [GitOps reconciliation and ownership](concepts/gitops-reconciliation-and-ownership.md) · [Cattle, not pets](concepts/cattle-not-pets.md) |
+| 1 · Cluster | Infrastructure-as-code state (backend, locking, encryption), the bootstrap problem, secret zero, layered provisioning, GitOps reconciliation | [OpenTofu state](concepts/opentofu-state.md) · [Secret zero](concepts/secret-zero.md) · [GitOps reconciliation and ownership](concepts/gitops-reconciliation-and-ownership.md) · [Cattle, not pets](concepts/cattle-not-pets.md) · [Retro](retros/phase-1.md) |
 | 2 · Platform | Policy as code, metrics/logs/traces, secrets management, log retention, TLS automation | _upcoming_ |
 | 3 · Kafka | Replication and ISR, KRaft quorum, TLS/SCRAM and ACLs, schema evolution | _upcoming_ |
 | 4 · Apps | Exactly-once processing, deterministic state machines, order books, idempotency, market surveillance | _upcoming_ |
