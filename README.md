@@ -19,7 +19,7 @@ maintenance, and high availability / disaster recovery, all designed as code.
 
 Start with the [learning track](docs/learning/README.md) for the concepts behind each phase.
 
-> **Status:** Phase 0 (foundation) complete; Phase 1 (cluster) next. See the [roadmap](#roadmap).
+> **Status:** Phase 1 (cluster) complete: a `dev` cluster is built from code in about three minutes. Phase 2 (platform services) next. See the [roadmap](#roadmap).
 
 ## Highlights
 
@@ -75,7 +75,12 @@ were considered and the trade-offs.
 | Local substrate | kind (1 control-plane + 1 worker in `dev`) | Upstream Kubernetes, multi-node, IaC-friendly | [0004](docs/adr/0004-use-kind-for-local-substrate.md) |
 | On-prem substrate | Proxmox VE + Talos Linux | Bank-like on-prem target; immutable, declarative OS | [0005](docs/adr/0005-design-proxmox-talos-as-second-substrate.md) |
 | Infrastructure as code | OpenTofu | Open-source (MPL-2.0); Terraform is now BUSL | [0006](docs/adr/0006-use-opentofu-for-infrastructure-as-code.md) |
-| GitOps | Argo CD, app-of-apps | Drift detection, self-heal, auditable changes | [0007](docs/adr/0007-use-argo-cd-for-gitops.md) |
+| GitOps | Argo CD with ApplicationSets | Drift detection, self-heal, auditable changes; one directory per component | [0007](docs/adr/0007-use-argo-cd-for-gitops.md), [0030](docs/adr/0030-generate-applications-with-applicationsets.md) |
+| IaC state | SeaweedFS outside the clusters; locking, versioning, encryption | Chosen by a spike: the alternative silently ignored locks | [0025](docs/adr/0025-store-iac-state-in-out-of-cluster-seaweedfs.md) |
+| Secrets bootstrap | One secret zero in the OS keychain; the rest generated | One hand-managed secret; rotation by `apply` | [0026](docs/adr/0026-keep-a-single-secret-zero-in-the-os-keychain.md) |
+| Repository layout | Layers and stacks; profile chosen explicitly per command | Blast radius per stack; no wrong-workspace accidents | [0027](docs/adr/0027-organise-the-repository-by-layer-and-profile.md) |
+| CNI | Cilium on every substrate, bootstrap-and-adopt | Same NetworkPolicy semantics everywhere; Hubble flow visibility | [0028](docs/adr/0028-use-cilium-as-cni-with-bootstrap-and-adopt.md) |
+| Kubernetes version | 1.35 via the kind provider, pinned by digest | Declarative cluster; a real upgrade path for Phase 8 | [0029](docs/adr/0029-pin-kubernetes-through-the-kind-provider.md) |
 | Event backbone | Apache Kafka on Strimzi, KRaft | Declarative topics, users and ACLs; rolling upgrades | [0008](docs/adr/0008-run-kafka-with-strimzi-in-kraft-mode.md) |
 | Services | Go + franz-go | Pure Go, transactions (EOS), high throughput | [0009](docs/adr/0009-write-services-in-go-with-franz-go.md) |
 | Analytical sink | ClickHouse (Altinity operator) | High ingest, compression, append-only audit | [0010](docs/adr/0010-use-clickhouse-as-analytical-sink.md) |
@@ -104,15 +109,15 @@ Full index: [docs/adr/](docs/adr/README.md).
 
 | Substrate | Status |
 |---|---|
-| kind (local, Docker) | Primary, Phase 1 |
-| Proxmox VE + Talos | Designed as code, run on demand |
+| kind (local, Docker) | Working: `task cluster:up PROFILE=dev` |
+| Proxmox VE + Talos | Code written and validated in CI, never applied ([ADR 0032](docs/adr/0032-implement-the-proxmox-talos-substrate-behind-the-same-contract.md)) |
 
 ## Roadmap
 
 | # | Phase | Scope | Status |
 |---|---|---|---|
 | 0 | Foundation | Repo hygiene, docs skeleton, ADRs, control matrix, CI | ✅ complete |
-| 1 | Cluster | Layered OpenTofu, kind, Argo CD bootstrap, profiles | ⚪ planned |
+| 1 | Cluster | Layered OpenTofu, kind, Argo CD bootstrap, profiles | ✅ complete |
 | 2 | Platform | Monitoring, logging and retention, Kyverno, Envoy Gateway, cert-manager, secrets | ⚪ planned |
 | 3 | Kafka | Strimzi KRaft, TLS + SCRAM, ACLs, topics as code, Apicurio, Kafbat UI | ⚪ planned |
 | 4 | Apps | trader-sim, order entry, matching engine (EOS), market data, surveillance, post-trade, ClickHouse, Valkey | ⚪ planned |
@@ -139,14 +144,19 @@ Full index: [docs/adr/](docs/adr/README.md).
 ## Getting started
 
 Requirements: Docker, kind, kubectl, Helm, OpenTofu, Task, pre-commit, gitleaks.
+Secret zero comes from `TOFU_STATE_PASSPHRASE`, or from the OS keychain where the task wrapper supports it.
 
 ```sh
-task tools:check   # verify required CLIs
-task setup         # install git hooks
-task lint          # run all checks
+task tools:check                      # verify required CLIs
+task setup                            # install git hooks
+task secrets:init                     # create secret zero (back it up!)
+task foundation:apply                 # state store (SeaweedFS) and state bucket
+task cluster:up PROFILE=dev           # kind + Cilium + Argo CD, then GitOps takes over
+export KUBECONFIG=~/.kube/kfep-dev.yaml
+task cluster:down PROFILE=dev         # tear down in reverse order
 ```
 
-Cluster provisioning arrives in Phase 1.
+Step by step, with checks and recovery: [runbooks](docs/runbooks/README.md).
 
 ## License
 

@@ -1,0 +1,11 @@
+# Cilium on Talos Linux (with kube-proxy), following the Talos documentation.
+# Talos mounts cgroups itself and restricts capabilities, so Cilium must be told explicitly.
+# Designed, not yet exercised on a real Talos cluster (ADR 0032).
+securityContext:
+  capabilities:
+    ciliumAgent: [CHOWN, KILL, NET_ADMIN, NET_RAW, IPC_LOCK, SYS_ADMIN, SYS_RESOURCE, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
+    cleanCiliumState: [NET_ADMIN, SYS_ADMIN, SYS_RESOURCE]
+cgroup:
+  autoMount:
+    enabled: false
+  hostRoot: /sys/fs/cgroup

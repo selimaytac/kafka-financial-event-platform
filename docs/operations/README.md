@@ -6,9 +6,12 @@ Every component is expected to have a documented lifecycle before its phase is c
 
 | Component | Version pin location | Upgrade path | Upgrade guide | Maintenance tasks |
 |---|---|---|---|---|
-| kind node image | _Phase 1_ | Recreate cluster with new image | _Phase 8_ | — |
-| Talos Linux | _Phase 1_ | Image-based rolling upgrade | _Phase 8_ | — |
-| Argo CD | _Phase 1_ | Helm chart, self-managed | _Phase 8_ | — |
+| SeaweedFS (state store) | `infra/modules/seaweedfs-local/variables.tf` (`image_tag`) | Replace container; data stays on the host | _Phase 8_ | Back up data directory; verify versioning |
+| cloud-provider-kind | `infra/stacks/substrate-kind-shared/variables.tf` (digest) | Replace container | _Phase 8_ | — |
+| kind node image (Kubernetes) | `infra/stacks/substrate-kind/profiles/*.tfvars` (digest) | One minor version at a time: 1.35 → 1.36 → 1.37 | _Phase 8_ | — |
+| Cilium | `gitops/platform/cilium/config.yaml` | Git change; Argo CD rolls out | _Phase 8_ | Hubble certificate CronJob health |
+| Talos Linux (Proxmox substrate) | `infra/modules/proxmox-talos-cluster/variables.tf` (`talos_version`, `kubernetes_version`) | Image-based rolling upgrade | _Phase 8_ | — |
+| Argo CD | `gitops/platform/argocd/config.yaml` | Git change; Argo CD upgrades itself | _Phase 8_ | — |
 | Strimzi operator | _Phase 3_ | Operator first, then Kafka version, then metadata version | _Phase 8_ | Certificate renewal, rebalancing |
 | Kafka | _Phase 3_ | Rolling restart by Strimzi | _Phase 8_ | Partition reassignment, retention review |
 | ClickHouse | _Phase 4_ | Rolling replica upgrade | _Phase 8_ | Merges, TTL, backup verification |
