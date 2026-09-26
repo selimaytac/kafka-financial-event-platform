@@ -21,6 +21,6 @@ Status values: `planned` · `implemented` · `verified` (evidence exists and is 
 | MKT-01 | MiFID II Art. 48(5); RTS 11 | Pre-trade controls: tick sizes and price corridors with volatility interruptions | Order entry and matching engine rules | _Phase 4_ | planned |
 | TIME-01 | RTS 25 | Event timestamps in UTC with microsecond granularity | Event schemas and producers | _Phase 4_ | planned |
 | SUR-01 | MAR Art. 16 | Detect suspicious order patterns (e.g. spoofing, wash trades) | Surveillance consumer | _Phase 4_ | planned |
-| RES-01 | DORA Art. 12 (backup, restoration and recovery) | Backups with tested restore | Backup tooling + restore drill | _Phase 7_ | planned |
+| RES-01 | DORA Art. 12 (backup, restoration and recovery) | Backups with tested restore | State store backup (`task lab:backup`) and restore drill; cluster data backups in Phase 7 | L3 drill: restore in 33 s, all plans clean ([host operations](../runbooks/host-operations.md)) | implemented (state only) |
 | RES-02 | DORA Art. 24-25 (resilience testing) | HA/DR scenarios exercised with measured RPO/RTO | Chaos Mesh + DR drills | [DR catalogue](../dr/README.md), _Phase 7_ | planned |
 | OPS-01 | ISO 27001 A.8.8 (vulnerability management) and A.8.32 | Components have documented upgrade and maintenance plans | `docs/operations/` | _Phase 8_ | planned |

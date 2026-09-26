@@ -1,5 +1,7 @@
 # Operations: maintenance and upgrades
 
+See also: [host footprint](host-footprint.md) (everything the lab places on the host).
+
 Every component is expected to have a documented lifecycle before its phase is closed.
 
 ## Component lifecycle inventory

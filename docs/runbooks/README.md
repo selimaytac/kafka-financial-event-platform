@@ -7,4 +7,5 @@ the system before. Start from [template.md](template.md).
 |---|---|---|
 | [Create, rebuild and remove a cluster](cluster-lifecycle.md) | Foundation, substrate, bootstrap | New machine, daily use, broken cluster |
 | [Recover Argo CD after a bad change](recover-argocd.md) | Argo CD | Argo CD down or not syncing |
+| [Pause, recover and remove the lab](host-operations.md) | Whole lab | Pause, Docker reset, data loss, removal |
 | [Back up and restore secret zero](secret-zero-backup-and-restore.md) | State encryption | Initial setup, new machine, exposure |
