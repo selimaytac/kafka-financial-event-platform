@@ -3,3 +3,6 @@
 service:
   type: NodePort
   nodePort: 30443
+  # The port mapping lands on the control-plane node while the proxy may run elsewhere;
+  # Local would drop that traffic. The client IP is always the host here anyway.
+  externalTrafficPolicy: Cluster

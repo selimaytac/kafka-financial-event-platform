@@ -11,6 +11,7 @@ spec:
         replicas: 1
       envoyService:
         type: {{ .Values.service.type }}
+        externalTrafficPolicy: {{ .Values.service.externalTrafficPolicy }}
         {{- with .Values.service.nodePort }}
         patch:
           type: StrategicMerge

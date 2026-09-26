@@ -9,6 +9,9 @@ service:
   # LoadBalancer on substrates with one; kind overrides it (values-substrate-kind.yaml).
   type: LoadBalancer
   nodePort: null
+  # Local keeps the client IP (useful for rate limits and audit logs); a real load
+  # balancer only sends traffic to nodes that run the proxy.
+  externalTrafficPolicy: Local
 
 routes:
   argocd:
