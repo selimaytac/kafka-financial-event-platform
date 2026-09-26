@@ -48,12 +48,18 @@ def render_components(workdir: str) -> bool:
         with open(config_path, encoding="utf-8") as fh:
             config = yaml.safe_load(fh)
         chart = config["chart"]
-        subprocess.run(
-            ["helm", "pull", chart["name"], "--repo", chart["repoURL"],
-             "--version", chart["version"], "--untar", "--untardir", workdir],
-            check=True, capture_output=True,
-        )
-        chart_dir = os.path.join(workdir, chart["name"])
+        if "path" in chart:  # local chart in this repository
+            chart_dir = chart["path"]
+        else:
+            source = (["oci://" + chart["repoURL"] + "/" + chart["name"]] if chart.get("oci")
+                      else [chart["name"], "--repo", chart["repoURL"]])
+            target = os.path.join(workdir, config["component"])
+            subprocess.run(
+                ["helm", "pull", *source, "--version", chart["version"],
+                 "--untar", "--untardir", target],
+                check=True, capture_output=True,
+            )
+            chart_dir = os.path.join(target, chart["name"])
         for profile in PROFILES:
             for substrate in SUBSTRATES:
                 values = [os.path.join(component_dir, "values.yaml"),
