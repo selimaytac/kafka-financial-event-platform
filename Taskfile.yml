@@ -214,8 +214,9 @@ tasks:
           grep -q '^sync: manual' "$config" || continue
           app=$(awk '/^component:/ {print $2}' "$config")
           for i in $(seq 1 60); do kubectl -n argocd get application "$app" >/dev/null 2>&1 && break; sleep 5; done
+          opts=$(kubectl -n argocd get application "$app" -o jsonpath='{.spec.syncPolicy.syncOptions}')
           kubectl -n argocd patch application "$app" --type merge \
-            -p '{"operation":{"initiatedBy":{"username":"task argo:adopt"},"sync":{}}}' >/dev/null
+            -p "{\"operation\":{\"initiatedBy\":{\"username\":\"task argo:adopt\"},\"sync\":{\"syncOptions\":${opts:-[]}}}}" >/dev/null
           echo "adoption sync triggered: $app"
         done
 
@@ -241,7 +242,12 @@ tasks:
         sh: echo "$HOME/.kube/kfep-{{.PROFILE}}.yaml"
     cmds:
       - kubectl -n argocd get application {{.APP}} -o jsonpath='{.status.sync.status}{"\n"}'
-      - kubectl -n argocd patch application {{.APP}} --type merge -p '{"operation":{"initiatedBy":{"username":"task argo:sync"},"sync":{}}}'
+      # Pass the Application's own sync options: a manual operation does not inherit them,
+      # and without ServerSideApply large objects fail on the last-applied annotation limit.
+      - |
+        opts=$(kubectl -n argocd get application {{.APP}} -o jsonpath='{.spec.syncPolicy.syncOptions}')
+        kubectl -n argocd patch application {{.APP}} --type merge \
+          -p "{\"operation\":{\"initiatedBy\":{\"username\":\"task argo:sync\"},\"sync\":{\"syncOptions\":${opts:-[]}}}}"
 
   gitops:check:
     desc: Render every GitOps component for every profile and substrate and validate the manifests
