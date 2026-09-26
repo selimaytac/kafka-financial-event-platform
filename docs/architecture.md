@@ -65,8 +65,10 @@ Namespaces are planned and confirmed in the phase that introduces each component
 | market data / surveillance / post-trade | Downstream consumers of executions | `apps` | _Phase 4_ | [0022](adr/0022-build-a-deterministic-price-time-matching-engine.md) |
 | ClickHouse | Analytical sink and audit store | `clickhouse` | _Phase 4_ | [0010](adr/0010-use-clickhouse-as-analytical-sink.md) |
 | Valkey | Dedup + cache | `apps` | _Phase 4_ | [0011](adr/0011-use-valkey-for-dedup-and-cache.md) |
+| cert-manager | Certificates from the lab intermediate CA | `cert-manager` | `gitops/platform/cert-manager/` | [0035](adr/0035-terminate-tls-at-a-single-gateway-with-a-lab-pki.md) |
+| Envoy Gateway + platform gateway | Single TLS entry point, `*.kfep.localhost` | `envoy-gateway-system` | `gitops/platform/envoy-gateway/`, `gitops/platform/gateway/` | [0014](adr/0014-expose-services-with-gateway-api.md), [0035](adr/0035-terminate-tls-at-a-single-gateway-with-a-lab-pki.md) |
+| Lab PKI | Root CA (outside clusters), per-profile intermediates | OpenTofu state | `infra/stacks/pki/` | [0035](adr/0035-terminate-tls-at-a-single-gateway-with-a-lab-pki.md) |
 | Kyverno | Admission policies | `kyverno` | _Phase 2_ | [0013](adr/0013-use-kyverno-for-policy-as-code.md) |
-| Envoy Gateway | North-south traffic | `envoy-gateway-system` | _Phase 2_ | [0014](adr/0014-expose-services-with-gateway-api.md) |
 | kube-prometheus-stack | Metrics, alerts, dashboards | `monitoring` | _Phase 2_ | [0015](adr/0015-use-kube-prometheus-stack-for-observability.md) |
 
 ## Profiles

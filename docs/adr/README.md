@@ -38,3 +38,5 @@ Process: [0001](0001-record-architecture-decisions.md) · Template: [template.md
 | 0032 | [Implement the Proxmox + Talos substrate behind the same output contract](0032-implement-the-proxmox-talos-substrate-behind-the-same-contract.md) | Accepted |
 | 0033 | [Guard reconciliation-critical components: manual sync and pre-merge rendering](0033-guard-reconciliation-critical-components.md) | Accepted |
 | 0034 | [Run the lab as a guest on its host: minimal footprint, explicit start, graded recovery](0034-run-the-lab-as-a-guest-on-its-host.md) | Accepted |
+| 0035 | [Terminate TLS at a single gateway, issued from a lab PKI outside the clusters](0035-terminate-tls-at-a-single-gateway-with-a-lab-pki.md) | Accepted |
+| 0036 | [Inject cluster parameters once, support all chart sources, and diff server-side](0036-inject-cluster-parameters-once-and-diff-server-side.md) | Accepted |
