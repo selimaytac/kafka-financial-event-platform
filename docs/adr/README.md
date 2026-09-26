@@ -36,3 +36,4 @@ Process: [0001](0001-record-architecture-decisions.md) · Template: [template.md
 | 0030 | [Generate Argo CD Applications with ApplicationSets; OpenTofu owns only the root](0030-generate-applications-with-applicationsets.md) | Accepted |
 | 0031 | [Manage repository settings and branch protection as code](0031-manage-repository-settings-as-code.md) | Accepted |
 | 0032 | [Implement the Proxmox + Talos substrate behind the same output contract](0032-implement-the-proxmox-talos-substrate-behind-the-same-contract.md) | Accepted |
+| 0033 | [Guard reconciliation-critical components: manual sync and pre-merge rendering](0033-guard-reconciliation-critical-components.md) | Accepted |
