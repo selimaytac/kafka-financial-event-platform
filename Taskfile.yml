@@ -154,7 +154,8 @@ tasks:
         set -e
         work=$(mktemp -d)
         trap 'rm -rf "$work"' EXIT
-        rsync -a --exclude '*.tfstate' --exclude '*.tfstate.*' --exclude '.terraform/' infra/ "$work/infra/"
+        rsync -a --exclude '*.tfstate' --exclude '*.tfstate.*' --exclude '.terraform/' --exclude '.terraform-*/' infra/ "$work/infra/"
+        rsync -a gitops/ "$work/gitops/"  # the bootstrap stack reads chart versions and values from it
         for dir in $(cd "$work" && find infra/stacks -name versions.tf -exec dirname {} \; | sort); do
           echo "validate $dir"
           tofu -chdir="$work/$dir" init -backend=false -input=false >/dev/null
