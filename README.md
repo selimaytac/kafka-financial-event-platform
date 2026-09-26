@@ -130,6 +130,10 @@ Full index: [docs/adr/](docs/adr/README.md).
 
 ## Documentation
 
+The same pages are published as a browsable site with rendered diagrams and search:
+**[selimaytac.github.io/kafka-financial-event-platform-docs](https://selimaytac.github.io/kafka-financial-event-platform-docs/)**.
+This repository stays the source of truth; the site is rebuilt from `docs/` automatically.
+
 | Path | Contents |
 |---|---|
 | [docs/learning/](docs/learning/README.md) | Learning path, concept notes and phase retrospectives |
