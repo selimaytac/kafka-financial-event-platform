@@ -3,6 +3,16 @@ version: "3"
 
 vars:
   REQUIRED_TOOLS: docker kind kubectl helm tofu pre-commit gitleaks
+  # Secret zero (ADR 0026): state encryption passphrase in the macOS Keychain.
+  KEYCHAIN_SERVICE: platform-labs.kafka-financial-event-platform.tofu-state
+  STORE_DIR: infra/stacks/foundation/store
+  BUCKET_DIR: infra/stacks/foundation/bucket
+
+# Shared by every OpenTofu task. The passphrase comes from TOFU_STATE_PASSPHRASE
+# when set (CI, non-macOS hosts), otherwise from the Keychain.
+env:
+  TF_PLUGIN_CACHE_DIR:
+    sh: echo "$HOME/.terraform.d/plugin-cache"
 
 tasks:
   default:
@@ -44,3 +54,146 @@ tasks:
     desc: Verify relative links in all Markdown files
     cmds:
       - pre-commit run markdown-relative-links --all-files
+
+  secrets:init:
+    desc: Create the state encryption passphrase (secret zero) in the macOS Keychain if missing
+    platforms: [darwin]
+    cmds:
+      - |
+        if security find-generic-password -s "{{.KEYCHAIN_SERVICE}}" >/dev/null 2>&1; then
+          echo "secret zero already present in the Keychain"
+        else
+          security add-generic-password -a "$USER" -s "{{.KEYCHAIN_SERVICE}}" -w "$(openssl rand -base64 32)"
+          echo "secret zero created. Back it up in a password manager; without it all state is unreadable."
+        fi
+    silent: true
+
+  # Foundation (ADR 0025): two small stacks with local, encrypted state.
+  # store: SeaweedFS container and credentials. bucket: state bucket and versioning.
+  # They are separate because the bucket's provider needs credentials known at plan time.
+  foundation:store:init:
+    internal: true
+    env: &store_env
+      TF_VAR_state_passphrase:
+        sh: printenv TOFU_STATE_PASSPHRASE || security find-generic-password -s "{{.KEYCHAIN_SERVICE}}" -w
+      TF_VAR_state_store_data_dir:
+        sh: echo "${PLATFORM_DATA_DIR:-$HOME/platform-labs-data/kafka-financial-event-platform}/seaweedfs"
+    cmds:
+      - mkdir -p "$TF_PLUGIN_CACHE_DIR"
+      - tofu -chdir={{.STORE_DIR}} init -input=false
+
+  foundation:bucket:init:
+    internal: true
+    env: &bucket_env
+      TF_VAR_state_passphrase:
+        sh: printenv TOFU_STATE_PASSPHRASE || security find-generic-password -s "{{.KEYCHAIN_SERVICE}}" -w
+      TF_VAR_s3_endpoint:
+        sh: tofu -chdir={{.STORE_DIR}} output -raw endpoint 2>/dev/null || true
+      TF_VAR_s3_access_key:
+        sh: tofu -chdir={{.STORE_DIR}} output -raw access_key 2>/dev/null || true
+      TF_VAR_s3_secret_key:
+        sh: tofu -chdir={{.STORE_DIR}} output -raw secret_key 2>/dev/null || true
+    cmds:
+      - mkdir -p "$TF_PLUGIN_CACHE_DIR"
+      - tofu -chdir={{.BUCKET_DIR}} init -input=false
+
+  foundation:plan:
+    desc: Plan both foundation stacks (state store and state bucket)
+    cmds:
+      - task: foundation:store:plan
+      - task: foundation:bucket:plan
+
+  foundation:apply:
+    desc: Create or update the state store, then the state bucket (pass `-- -auto-approve` to skip prompts)
+    cmds:
+      - task: foundation:store:apply
+      - task: foundation:bucket:apply
+
+  foundation:store:plan:
+    internal: true
+    deps: [foundation:store:init]
+    env: *store_env
+    cmds:
+      - tofu -chdir={{.STORE_DIR}} plan -input=false
+
+  foundation:store:apply:
+    internal: true
+    interactive: true
+    deps: [foundation:store:init]
+    env: *store_env
+    cmds:
+      - mkdir -p "$TF_VAR_state_store_data_dir"
+      - tofu -chdir={{.STORE_DIR}} apply {{.CLI_ARGS}}
+
+  foundation:bucket:plan:
+    internal: true
+    deps: [foundation:bucket:init]
+    env: *bucket_env
+    cmds:
+      - tofu -chdir={{.BUCKET_DIR}} plan -input=false
+
+  foundation:bucket:apply:
+    internal: true
+    interactive: true
+    deps: [foundation:bucket:init]
+    env: *bucket_env
+    cmds:
+      - tofu -chdir={{.BUCKET_DIR}} apply {{.CLI_ARGS}}
+
+  infra:check:
+    desc: Check formatting and validate every OpenTofu stack (no backend, no state, no credentials)
+    env:
+      # Validation never touches state; a throwaway value satisfies the encryption block.
+      TF_VAR_state_passphrase: validate-only-not-a-secret
+    cmds:
+      - mkdir -p "$TF_PLUGIN_CACHE_DIR"
+      - tofu fmt -check -recursive infra
+      # Validate a copy without local state files: with -backend=false OpenTofu would
+      # otherwise try to read encrypted local state without its encryption settings.
+      - |
+        set -e
+        work=$(mktemp -d)
+        trap 'rm -rf "$work"' EXIT
+        rsync -a --exclude '*.tfstate' --exclude '*.tfstate.*' --exclude '.terraform/' --exclude '.terraform-*/' infra/ "$work/infra/"
+        rsync -a gitops/ "$work/gitops/"  # the bootstrap stack reads chart versions and values from it
+        for dir in $(cd "$work" && find infra/stacks -name versions.tf -exec dirname {} \; | sort); do
+          echo "validate $dir"
+          # A missing lock file would be created silently in CI, hiding unpinned providers.
+          test -f "$work/$dir/.terraform.lock.hcl" || { echo "missing $dir/.terraform.lock.hcl (commit it)"; exit 1; }
+          tofu -chdir="$work/$dir" init -backend=false -input=false >/dev/null
+          tofu -chdir="$work/$dir" validate -no-color
+        done
+
+  tofu:
+    desc: "Run OpenTofu on a remote-state stack: task tofu STACK=<stack> [PROFILE=<profile>] -- <command> [args]"
+    interactive: true
+    requires:
+      vars: [STACK]
+    cmds:
+      - scripts/tofu.sh {{.STACK}} {{.PROFILE | default "-"}} {{.CLI_ARGS}}
+
+  cluster:up:
+    desc: "Create or update a cluster end to end: task cluster:up PROFILE=dev [REVISION=main] (-- -auto-approve)"
+    requires:
+      vars: [PROFILE]
+    vars:
+      REVISION: '{{.REVISION | default "main"}}'
+    cmds:
+      - scripts/tofu.sh substrate-kind-shared - init
+      - scripts/tofu.sh substrate-kind-shared - apply {{.CLI_ARGS}}
+      - scripts/tofu.sh substrate-kind {{.PROFILE}} init
+      - scripts/tofu.sh substrate-kind {{.PROFILE}} apply {{.CLI_ARGS}}
+      - scripts/tofu.sh bootstrap {{.PROFILE}} init
+      - scripts/tofu.sh bootstrap {{.PROFILE}} apply -var target_revision={{.REVISION}} {{.CLI_ARGS}}
+    interactive: true
+
+  cluster:down:
+    desc: "Destroy a cluster in reverse order (bootstrap, then substrate): task cluster:down PROFILE=dev (-- -auto-approve)"
+    requires:
+      vars: [PROFILE]
+    cmds:
+      - scripts/tofu.sh bootstrap {{.PROFILE}} init
+      - scripts/tofu.sh bootstrap {{.PROFILE}} destroy {{.CLI_ARGS}}
+      - scripts/tofu.sh substrate-kind {{.PROFILE}} init
+      - scripts/tofu.sh substrate-kind {{.PROFILE}} destroy {{.CLI_ARGS}}
+    interactive: true

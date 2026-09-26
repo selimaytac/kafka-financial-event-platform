@@ -1,0 +1,3 @@
+# dev: two nodes, keep the footprint small.
+operator:
+  replicas: 1
