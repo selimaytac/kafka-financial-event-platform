@@ -27,7 +27,10 @@ spec:
         certificateRefs:
           - name: platform-gateway-tls
       allowedRoutes:
-        # Routes from any namespace for now; restricted by namespace label with the
-        # policy baseline (Phase 2, Kyverno).
+        # Only namespaces labelled for gateway access may attach routes. Gateway API's own
+        # mechanism: it holds even if the policy engine is down (ADR 0038).
         namespaces:
-          from: All
+          from: Selector
+          selector:
+            matchLabels:
+              kfep.io/gateway-access: "true"

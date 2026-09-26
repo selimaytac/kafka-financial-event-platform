@@ -181,6 +181,22 @@ resource "random_password" "grafana_admin" {
 resource "kubernetes_namespace_v1" "monitoring" {
   metadata {
     name = "monitoring"
+    labels = {
+      "kfep.io/gateway-access" = "true" # Grafana is published through the gateway
+    }
+  }
+}
+
+# Namespaces allowed to attach routes to the platform gateway (ADR 0038). The argocd
+# namespace is created by the Argo CD release, so only its label is managed here.
+resource "kubernetes_labels" "argocd_gateway_access" {
+  api_version = "v1"
+  kind        = "Namespace"
+  metadata {
+    name = helm_release.argocd.namespace
+  }
+  labels = {
+    "kfep.io/gateway-access" = "true"
   }
 }
 
