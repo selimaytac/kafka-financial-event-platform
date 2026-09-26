@@ -89,6 +89,7 @@ were considered and the trade-offs.
 | CI | GitHub Actions | Native to the repository host; reuses local `task` targets | [0018](docs/adr/0018-use-github-actions-for-ci.md) |
 | Governance | Regulations as reference frameworks | Controls are traceable, with no false compliance claims | [0019](docs/adr/0019-treat-regulations-as-reference-frameworks.md) |
 | Repo hygiene | pre-commit, gitleaks, Conventional Commits, Task | No leaked secrets; readable, attributable history | [0020](docs/adr/0020-enforce-repository-hygiene-with-pre-commit.md) |
+| Change gate & supply chain | `main` ruleset with required CI, push protection, SHA-pinned dependencies | CI is a real gate; third-party code is immutable | [0024](docs/adr/0024-protect-main-and-pin-third-party-code.md) |
 | Documentation | Learning notes separate from operational docs | Each document keeps one purpose (Diátaxis) | [0023](docs/adr/0023-separate-learning-notes-from-operational-docs.md) |
 
 Full index: [docs/adr/](docs/adr/README.md).
