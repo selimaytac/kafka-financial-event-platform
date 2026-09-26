@@ -10,9 +10,6 @@ configs:
   params:
     # TLS terminates at the platform Gateway (ADR 0035); argocd-server serves plain HTTP inside.
     server.insecure: true
-    # Compare against a server-side dry-run apply, so defaults filled in by the API server
-    # (e.g. Gateway API fields) and mutating webhooks do not show up as permanent drift.
-    controller.diff.server.side: "true"
   repositories:
     # Helm OCI registry for charts published only as OCI artifacts (e.g. Envoy Gateway).
     envoyproxy-oci:
@@ -22,15 +19,33 @@ configs:
       enableOCI: "true"
 
 # Metrics Services only; the ServiceMonitor lives in the monitoring component (ADR 0037).
+# Resources are sized from measured peaks with headroom (ADR 0037). The application
+# controller caches every watched object; large CRDs push it past 1 GiB.
 controller:
   metrics:
     enabled: true
+  resources:
+    requests: { cpu: 250m, memory: 768Mi }
+    limits: { memory: 1536Mi }
 server:
   metrics:
     enabled: true
+  resources:
+    requests: { cpu: 20m, memory: 64Mi }
+    limits: { memory: 192Mi }
 repoServer:
   metrics:
     enabled: true
+  resources:
+    requests: { cpu: 50m, memory: 192Mi }
+    limits: { memory: 512Mi }
 applicationSet:
   metrics:
     enabled: true
+  resources:
+    requests: { cpu: 20m, memory: 64Mi }
+    limits: { memory: 192Mi }
+redis:
+  resources:
+    requests: { cpu: 10m, memory: 32Mi }
+    limits: { memory: 96Mi }
