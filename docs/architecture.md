@@ -52,7 +52,10 @@ Namespaces are planned and confirmed in the phase that introduces each component
 
 | Component | Purpose | Namespace | Config path | ADR |
 |---|---|---|---|---|
-| Argo CD | GitOps controller | `argocd` | _Phase 1_ | [0007](adr/0007-use-argo-cd-for-gitops.md) |
+| SeaweedFS | OpenTofu state store, outside the clusters | Docker (host) | `infra/stacks/foundation/` | [0025](adr/0025-store-iac-state-in-out-of-cluster-seaweedfs.md) |
+| cloud-provider-kind | LoadBalancer services for kind | Docker (host) | `infra/stacks/substrate-kind-shared/` | [0014](adr/0014-expose-services-with-gateway-api.md) |
+| Cilium | CNI, NetworkPolicy, Hubble | `kube-system` | `gitops/platform/cilium/` | [0028](adr/0028-use-cilium-as-cni-with-bootstrap-and-adopt.md) |
+| Argo CD | GitOps controller (self-managed) | `argocd` | `gitops/platform/argocd/`, `gitops/root/` | [0030](adr/0030-generate-applications-with-applicationsets.md) |
 | Strimzi + Kafka | Event backbone | `kafka` | _Phase 3_ | [0008](adr/0008-run-kafka-with-strimzi-in-kraft-mode.md) |
 | Apicurio Registry | Schema registry | `kafka` | _Phase 3_ | [0012](adr/0012-use-apicurio-as-schema-registry.md) |
 | Kafbat UI | Kafka inspection | `kafka` | _Phase 3_ | [0016](adr/0016-use-kafbat-ui-for-kafka-inspection.md) |
