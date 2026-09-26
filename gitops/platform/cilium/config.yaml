@@ -1,5 +1,7 @@
 # Read by the platform ApplicationSet and by the bootstrap stack (single source of truth).
 component: cilium
+# Manual: a bad change here could stop reconciliation itself (ADR 0033).
+sync: manual
 namespace: kube-system
 chart:
   repoURL: https://helm.cilium.io

@@ -18,6 +18,8 @@ RPO = maximum acceptable data loss; RTO = maximum acceptable time to recover.
 | DR-02 | Site failover to secondary cluster | DR | Consumers resume on secondary from replicated offsets | TBD | `dr` | planned |
 | DR-03 | Accidental topic or table deletion | DR | Restore from backup; GitOps recreates config | TBD | `dev` | planned |
 | DR-04 | Bad deployment (config or schema) | DR | Git revert; Argo CD rolls back | 0 / < 10 min | `dev` | planned |
+| DR-06 | Host Docker reset (lab only) | DR | Rebuild from code; state survives on the host bind mount | 0 / 280 s measured | `dev` | verified |
+| DR-07 | State store data lost | DR | Restore archive from `task lab:backup` | Since last backup / 33 s measured | `dev` | verified |
 | DR-05 | Order book state lost | DR | Rebuild from snapshot + log replay; book identical to pre-failure (checksum) | 0 / TBD | `dev` | planned |
 
 Targets marked TBD are decided with the DR topology decision in Phase 7.

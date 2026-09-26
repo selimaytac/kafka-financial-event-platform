@@ -1,5 +1,7 @@
 # Operations: maintenance and upgrades
 
+See also: [host footprint](host-footprint.md) (everything the lab places on the host).
+
 Every component is expected to have a documented lifecycle before its phase is closed.
 
 ## Component lifecycle inventory
@@ -16,8 +18,11 @@ Every component is expected to have a documented lifecycle before its phase is c
 | Kafka | _Phase 3_ | Rolling restart by Strimzi | _Phase 8_ | Partition reassignment, retention review |
 | ClickHouse | _Phase 4_ | Rolling replica upgrade | _Phase 8_ | Merges, TTL, backup verification |
 | Valkey | _Phase 4_ | Replica-first failover | _Phase 8_ | Memory review |
+| cert-manager | `gitops/platform/cert-manager/config.yaml` | Git change; CRDs kept on removal | _Phase 8_ | Certificate expiry and renewal |
+| Envoy Gateway | `gitops/platform/envoy-gateway/config.yaml` (OCI) | Git change | _Phase 8_ | — |
+| Lab PKI | `infra/stacks/pki/main.tf` | Intermediates re-issued 30 days before expiry (plan shows it) | _Phase 8_ | Yearly intermediate rotation |
 | Kyverno | _Phase 2_ | Helm chart | _Phase 8_ | Policy report review |
-| kube-prometheus-stack | _Phase 2_ | Helm chart (CRDs first) | _Phase 8_ | Retention and cardinality review |
+| kube-prometheus-stack | `gitops/platform/monitoring/config.yaml` | Git change; large CRDs need server-side apply | _Phase 8_ | Retention, cardinality and limit review against measurements |
 
 ## Upgrade principles
 

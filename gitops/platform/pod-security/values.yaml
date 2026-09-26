@@ -1,0 +1,11 @@
+# "restricted" installs the baseline and the restricted controls (ADR 0038).
+podSecurityStandard: restricted
+policyType: ValidatingPolicy
+# Enforced policies deny requests when Kyverno is unreachable. The webhooks exclude
+# kube-system and kyverno, so the engine can always restart itself.
+failurePolicy: Fail
+# Rollout: everything starts in Audit; baseline controls move to Enforce once the policy
+# reports are clean or covered by exceptions. Restricted controls stay in Audit (visibility):
+# many third-party charts do not meet them.
+validationFailureAction: Audit
+validationFailureActionByPolicy: {}

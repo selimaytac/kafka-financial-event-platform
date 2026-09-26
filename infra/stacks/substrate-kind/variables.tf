@@ -19,6 +19,16 @@ variable "node_image" {
   type        = string
 }
 
+variable "gateway_host_port" {
+  description = "Host port on 127.0.0.1 for this profile's gateway."
+  type        = number
+}
+
+variable "cpu_caps" {
+  description = "CPU cap per node container for this profile (0 = none)."
+  type        = object({ control_plane = number, worker = number })
+}
+
 variable "workers" {
   description = "Number of worker nodes for this profile."
   type        = number

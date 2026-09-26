@@ -1,5 +1,6 @@
-# One Application per gitops/platform/<component>/config.yaml (ADR 0030).
-# PROFILE, SUBSTRATE and REVISION are replaced by the root Application's Kustomize patches.
+# One Application per gitops/platform/<component>/config.yaml (ADR 0030, ADR 0035).
+# Cluster parameters (profile, substrate, Git revision) come from a single list element;
+# the root Application replaces that element, so they are injected in exactly one place.
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -12,38 +13,75 @@ spec:
     # Removing a component directory must not uninstall the CNI or Argo CD by accident.
     preserveResourcesOnDeletion: true
   generators:
-    - git:
-        repoURL: https://github.com/selimaytac/kafka-financial-event-platform.git
-        revision: REVISION
-        files:
-          - path: gitops/platform/*/config.yaml
+    - matrix:
+        generators:
+          - git:
+              repoURL: https://github.com/selimaytac/kafka-financial-event-platform.git
+              revision: REVISION
+              files:
+                - path: gitops/platform/*/config.yaml
+          - list:
+              elements:
+                - profile: PROFILE
+                  substrate: SUBSTRATE
+                  revision: REVISION
   template:
     metadata:
       name: "{{ .component }}"
     spec:
       project: default
+      sources: []
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{ .namespace }}"
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true
+          # Components may use CRDs installed by other components; retry until they exist.
+          - SkipDryRunOnMissingResource=true
+  # Sources depend on where the chart lives: a Helm repository (HTTPS or OCI) or a local
+  # chart in this repository. Values are layered: base, profile, substrate.
+  # Sync mode comes from config.yaml: "manual" for components whose failure would stop
+  # reconciliation itself (the CNI, Argo CD), ADR 0033.
+  templatePatch: |
+    {{- if eq (index . "diff" | default "") "server-side" }}
+    metadata:
+      annotations:
+        # Server-side diff only where API-server defaults cause false drift (ADR 0036):
+        # it sends a dry-run apply for every resource on every comparison.
+        argocd.argoproj.io/compare-options: ServerSideDiff=true
+    {{- end }}
+    spec:
       sources:
+        {{- if hasKey .chart "path" }}
+        - repoURL: https://github.com/selimaytac/kafka-financial-event-platform.git
+          targetRevision: "{{ .revision }}"
+          path: "{{ .chart.path }}"
+        {{- else }}
         - repoURL: "{{ .chart.repoURL }}"
           chart: "{{ .chart.name }}"
           targetRevision: "{{ .chart.version }}"
+        {{- end }}
           helm:
             releaseName: "{{ .component }}"
             ignoreMissingValueFiles: true
             valueFiles:
               - "$values/{{ .path.path }}/values.yaml"
-              - "$values/{{ .path.path }}/values-PROFILE.yaml"
-              # Substrate-specific settings (e.g. Cilium on Talos), isolated in one named file.
-              - "$values/{{ .path.path }}/values-substrate-SUBSTRATE.yaml"
+              - "$values/{{ .path.path }}/values-{{ .profile }}.yaml"
+              - "$values/{{ .path.path }}/values-substrate-{{ .substrate }}.yaml"
         - repoURL: https://github.com/selimaytac/kafka-financial-event-platform.git
-          targetRevision: REVISION
+          targetRevision: "{{ .revision }}"
           ref: values
-      destination:
-        server: https://kubernetes.default.svc
-        namespace: "{{ .namespace }}"
+      {{- if eq .sync "automated" }}
       syncPolicy:
         automated:
           prune: true
           selfHeal: true
-        syncOptions:
-          - CreateNamespace=true
-          - ServerSideApply=true
+        retry:
+          limit: 10
+          backoff:
+            duration: 10s
+            factor: 2
+            maxDuration: 5m
+      {{- end }}

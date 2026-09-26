@@ -1,0 +1,8 @@
+# Pod Security Standards as Kyverno ValidatingPolicies (CEL), maintained upstream.
+component: pod-security
+sync: automated
+namespace: kyverno
+chart:
+  repoURL: https://kyverno.github.io/kyverno
+  name: kyverno-policies
+  version: 3.9.1
