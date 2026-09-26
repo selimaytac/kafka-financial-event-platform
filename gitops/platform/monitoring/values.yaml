@@ -77,9 +77,11 @@ grafana:
       port: grafana
     periodSeconds: 10
     failureThreshold: 60
+  # Measured: Grafana 13 settles around 250-300Mi; 256Mi caused reclaim thrashing and a
+  # multi-minute start. Limits follow measurements, with headroom.
   resources:
-    requests: { cpu: 100m, memory: 128Mi }
-    limits: { memory: 256Mi }
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { memory: 512Mi }
   sidecar:
     resources:
       requests: { cpu: 10m, memory: 48Mi }
