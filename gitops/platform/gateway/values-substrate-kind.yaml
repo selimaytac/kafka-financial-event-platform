@@ -1,0 +1,5 @@
+# kind: fixed NodePort reached through 127.0.0.1:<profile port>
+# (kind extraPortMappings, ADR 0034/0035). A random load-balancer port would break OIDC redirects.
+service:
+  type: NodePort
+  nodePort: 30443

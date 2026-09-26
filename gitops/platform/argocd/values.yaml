@@ -5,3 +5,15 @@ dex:
 
 notifications:
   enabled: false
+
+configs:
+  params:
+    # TLS terminates at the platform Gateway (ADR 0035); argocd-server serves plain HTTP inside.
+    server.insecure: true
+  repositories:
+    # Helm OCI registry for charts published only as OCI artifacts (e.g. Envoy Gateway).
+    envoyproxy-oci:
+      name: envoyproxy
+      type: helm
+      url: docker.io/envoyproxy
+      enableOCI: "true"

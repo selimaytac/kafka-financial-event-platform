@@ -1,0 +1,19 @@
+domain: kfep.localhost
+
+issuer:
+  # ClusterIssuer backed by the per-profile intermediate CA (secret created by the bootstrap).
+  name: kfep-intermediate-ca
+  caSecretName: kfep-intermediate-ca
+
+service:
+  # LoadBalancer on substrates with one; kind overrides it (values-substrate-kind.yaml).
+  type: LoadBalancer
+  nodePort: null
+
+routes:
+  argocd:
+    enabled: true
+    host: argocd
+    namespace: argocd
+    service: argocd-server
+    port: 80

@@ -1,0 +1,3 @@
+# Gateway API controller (ADR 0014). Gateways, listeners and TLS live in the "gateway" component.
+deployment:
+  replicas: 1

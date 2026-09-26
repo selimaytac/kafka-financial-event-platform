@@ -1,0 +1,6 @@
+# Local chart in this repository: the platform's single entry point (ADR 0035).
+component: gateway
+sync: automated
+namespace: envoy-gateway-system
+chart:
+  path: gitops/platform/gateway/chart

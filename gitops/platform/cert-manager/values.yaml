@@ -1,0 +1,5 @@
+# Issues certificates from the lab intermediate CA (ADR 0035).
+crds:
+  enabled: true
+  # Keep CRDs (and therefore every Certificate) if the release is ever removed.
+  keep: true

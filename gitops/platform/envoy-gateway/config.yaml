@@ -1,0 +1,10 @@
+# Envoy Gateway is published only as an OCI chart; Argo CD reads it through a Helm OCI
+# repository declared in gitops/platform/argocd/values.yaml.
+component: envoy-gateway
+sync: automated
+namespace: envoy-gateway-system
+chart:
+  repoURL: docker.io/envoyproxy
+  name: gateway-helm
+  version: v1.9.1
+  oci: true
