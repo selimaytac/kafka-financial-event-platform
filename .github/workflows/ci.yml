@@ -41,7 +41,7 @@ jobs:
           tofu_wrapper: false
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
-          path: ~/.terraform.d/plugin-cache
+          path: ~/platform-labs-data/kafka-financial-event-platform/plugin-cache
           key: tofu-plugins-${{ runner.os }}-${{ hashFiles('infra/**/.terraform.lock.hcl') }}
       - run: task infra:check
       - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
