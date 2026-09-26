@@ -24,6 +24,11 @@ variable "gateway_host_port" {
   type        = number
 }
 
+variable "cpu_caps" {
+  description = "CPU cap per node container for this profile (0 = none)."
+  type        = object({ control_plane = number, worker = number })
+}
+
 variable "workers" {
   description = "Number of worker nodes for this profile."
   type        = number

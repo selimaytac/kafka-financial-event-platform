@@ -34,6 +34,12 @@ variable "gateway_node_port" {
   default     = 30443
 }
 
+variable "cpu_caps" {
+  description = "CPU cap per node container (Docker --cpus); 0 disables the cap. Protects the host (ADR 0034)."
+  type        = object({ control_plane = number, worker = number })
+  default     = { control_plane = 0, worker = 0 }
+}
+
 variable "kubeconfig_path" {
   description = "Where to write this cluster's kubeconfig (a dedicated file, never the default one)."
   type        = string
