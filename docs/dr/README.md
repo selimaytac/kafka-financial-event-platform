@@ -14,7 +14,7 @@ RPO = maximum acceptable data loss; RTO = maximum acceptable time to recover.
 | HA-04 | Matching engine crash mid-transaction | HA | Transaction aborted; engine resumes from last commit; no duplicate or missing executions | 0 / < 1 min | `dev` | planned |
 | HA-05 | Valkey loss | HA | Dedup falls back to sink idempotency; cache rebuilt | 0 / < 5 min | `dev` | planned |
 | HA-06 | ClickHouse replica loss | HA | Inserts continue on remaining replica | 0 / < 5 min | `perf` | planned |
-| DR-01 | Full cluster loss, restore from backup | DR | Rebuild from Git + restore data | TBD | `dr` | planned |
+| DR-01 | Full cluster loss, restore from backup | DR | Rebuild from Git + restore data | TBD (rebuild without data measured: ~3 min, Phase 1) | `dr` | planned |
 | DR-02 | Site failover to secondary cluster | DR | Consumers resume on secondary from replicated offsets | TBD | `dr` | planned |
 | DR-03 | Accidental topic or table deletion | DR | Restore from backup; GitOps recreates config | TBD | `dev` | planned |
 | DR-04 | Bad deployment (config or schema) | DR | Git revert; Argo CD rolls back | 0 / < 10 min | `dev` | planned |
