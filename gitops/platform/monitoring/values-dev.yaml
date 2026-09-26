@@ -1,0 +1,19 @@
+# dev: disposable metrics, small footprint (ADR 0037).
+prometheus:
+  prometheusSpec:
+    retention: 3d
+    retentionSize: 2GiB
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          resources:
+            requests:
+              storage: 3Gi
+    resources:
+      requests: { cpu: 100m, memory: 300Mi }
+      limits: { memory: 768Mi }
+
+grafana:
+  grafana.ini:
+    server:
+      root_url: https://grafana.kfep.localhost:8443

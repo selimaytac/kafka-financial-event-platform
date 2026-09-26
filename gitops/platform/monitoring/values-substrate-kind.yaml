@@ -1,0 +1,13 @@
+# kind binds etcd, the scheduler, the controller manager and kube-proxy metrics to the
+# node's loopback, so they cannot be scraped; monitoring them would only raise false alerts.
+kubeEtcd: { enabled: false }
+kubeScheduler: { enabled: false }
+kubeControllerManager: { enabled: false }
+kubeProxy: { enabled: false }
+defaultRules:
+  rules:
+    etcd: false
+    kubeSchedulerAlerting: false
+    kubeSchedulerRecording: false
+    kubeControllerManager: false
+    kubeProxy: false

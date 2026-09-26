@@ -1,0 +1,8 @@
+# Metrics, alerting and dashboards (ADR 0015, ADR 0037).
+component: monitoring
+sync: automated
+namespace: monitoring
+chart:
+  repoURL: https://prometheus-community.github.io/helm-charts
+  name: kube-prometheus-stack
+  version: 91.7.0
