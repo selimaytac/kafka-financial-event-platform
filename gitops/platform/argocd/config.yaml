@@ -1,0 +1,7 @@
+# Read by the platform ApplicationSet and by the bootstrap stack (single source of truth).
+component: argocd
+namespace: argocd
+chart:
+  repoURL: https://argoproj.github.io/argo-helm
+  name: argo-cd
+  version: 10.9.2

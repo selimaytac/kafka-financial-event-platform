@@ -1,0 +1,21 @@
+# Cilium on every substrate (ADR 0028). Profile overrides: values-<profile>.yaml.
+ipam:
+  mode: kubernetes
+
+# kube-proxy stays for now; kube-proxy replacement is a separate, later change.
+kubeProxyReplacement: false
+
+operator:
+  replicas: 2
+
+hubble:
+  enabled: true
+  relay:
+    enabled: true
+  ui:
+    enabled: true
+  tls:
+    auto:
+      # The default ("helm") generates new certificates on every render, which leaves a
+      # GitOps controller permanently out of sync. A CronJob generates them in-cluster.
+      method: cronJob

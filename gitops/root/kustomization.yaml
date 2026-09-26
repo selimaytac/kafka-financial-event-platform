@@ -1,0 +1,7 @@
+# Root of the GitOps tree. The root Application (created by the bootstrap stack) injects
+# the profile and Git revision through inline Kustomize patches, so this tree has no
+# per-profile copies.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - applicationset-platform.yaml
