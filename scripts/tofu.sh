@@ -45,6 +45,11 @@ AWS_SECRET_ACCESS_KEY=$(tofu -chdir="$STORE_DIR" output -raw secret_key)
 export AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY
 # Stacks that read other stacks' state (terraform_remote_state) need the endpoint too.
 export TF_VAR_state_endpoint="$endpoint"
+# The GitHub provider reuses the gh CLI's token (already in the OS keychain) instead of a new secret.
+if [[ "$stack" == "github" ]]; then
+  GITHUB_TOKEN="${GITHUB_TOKEN:-$(gh auth token)}"
+  export GITHUB_TOKEN
+fi
 export TF_DATA_DIR="$PWD/${data_dir}"
 export TF_PLUGIN_CACHE_DIR="${TF_PLUGIN_CACHE_DIR:-$HOME/.terraform.d/plugin-cache}"
 mkdir -p "$TF_PLUGIN_CACHE_DIR"
