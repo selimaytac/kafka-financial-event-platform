@@ -17,6 +17,7 @@ Status values: `planned` · `implemented` · `verified` (evidence exists and is 
 | REC-01 | MiFIR Art. 25; RTS 24 | Order and trade records retained and retrievable | Audit tables in ClickHouse, retention per data class | _Phase 4_ | planned |
 | REC-02 | MiFIR Art. 25; ISO 27001 A.8.15 | Audit records are tamper-evident | Append-only storage, hash chaining / object lock | _Phase 4_ | planned |
 | LOG-01 | ISO 27001 A.8.15 (logging); DORA Art. 10 (detection) | Security and access logs retained with defined periods | Log pipeline with retention tiers | _Phase 2_ | planned |
+| MON-01 | DORA Art. 10 (detection); ISO 27001 A.8.16 (monitoring activities) | Failures of reconciliation and certificate renewal are detected | Prometheus alerts: Argo CD out of sync / unhealthy, certificate renewal failing / not ready; runbook links | `gitops/platform/monitoring/values.yaml`; alerts visible in Alertmanager (no delivery channel yet) | implemented (UI only) |
 | PII-01 | GDPR Art. 5(1)(c) data minimisation; Art. 32 pseudonymisation | Personal data classified and masked where not needed | Schema tags + field masking | _Phase 4_ | planned |
 | MKT-01 | MiFID II Art. 48(5); RTS 11 | Pre-trade controls: tick sizes and price corridors with volatility interruptions | Order entry and matching engine rules | _Phase 4_ | planned |
 | TIME-01 | RTS 25 | Event timestamps in UTC with microsecond granularity | Event schemas and producers | _Phase 4_ | planned |

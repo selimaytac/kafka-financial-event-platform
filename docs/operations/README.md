@@ -22,7 +22,7 @@ Every component is expected to have a documented lifecycle before its phase is c
 | Envoy Gateway | `gitops/platform/envoy-gateway/config.yaml` (OCI) | Git change | _Phase 8_ | — |
 | Lab PKI | `infra/stacks/pki/main.tf` | Intermediates re-issued 30 days before expiry (plan shows it) | _Phase 8_ | Yearly intermediate rotation |
 | Kyverno | _Phase 2_ | Helm chart | _Phase 8_ | Policy report review |
-| kube-prometheus-stack | _Phase 2_ | Helm chart (CRDs first) | _Phase 8_ | Retention and cardinality review |
+| kube-prometheus-stack | `gitops/platform/monitoring/config.yaml` | Git change; large CRDs need server-side apply | _Phase 8_ | Retention, cardinality and limit review against measurements |
 
 ## Upgrade principles
 
