@@ -2,7 +2,7 @@
 version: "3"
 
 vars:
-  REQUIRED_TOOLS: docker kind kubectl helm tofu pre-commit gitleaks
+  REQUIRED_TOOLS: docker kind kubectl helm tofu pre-commit gitleaks kubeconform
   # Secret zero (ADR 0026): state encryption passphrase in the OS keychain (macOS `security` CLI).
   KEYCHAIN_SERVICE: platform-labs.kafka-financial-event-platform.tofu-state
   STORE_DIR: infra/stacks/foundation/store
@@ -197,3 +197,21 @@ tasks:
       - scripts/tofu.sh substrate-kind {{.PROFILE}} init
       - scripts/tofu.sh substrate-kind {{.PROFILE}} destroy {{.CLI_ARGS}}
     interactive: true
+
+  argo:sync:
+    desc: "Trigger a sync of an Argo CD Application (for manual-sync components): task argo:sync APP=cilium [PROFILE=dev]"
+    requires:
+      vars: [APP]
+    vars:
+      PROFILE: '{{.PROFILE | default "dev"}}'
+    env:
+      KUBECONFIG:
+        sh: echo "$HOME/.kube/kfep-{{.PROFILE}}.yaml"
+    cmds:
+      - kubectl -n argocd get application {{.APP}} -o jsonpath='{.status.sync.status}{"\n"}'
+      - kubectl -n argocd patch application {{.APP}} --type merge -p '{"operation":{"initiatedBy":{"username":"task argo:sync"},"sync":{}}}'
+
+  gitops:check:
+    desc: Render every GitOps component for every profile and substrate and validate the manifests
+    cmds:
+      - python3 scripts/gitops_check.py

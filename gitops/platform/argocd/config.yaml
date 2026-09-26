@@ -1,5 +1,7 @@
 # Read by the platform ApplicationSet and by the bootstrap stack (single source of truth).
 component: argocd
+# Manual: a bad change here could stop reconciliation itself (ADR 0033).
+sync: manual
 namespace: argocd
 chart:
   repoURL: https://argoproj.github.io/argo-helm

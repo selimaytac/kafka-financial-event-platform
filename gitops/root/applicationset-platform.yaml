@@ -41,9 +41,17 @@ spec:
         server: https://kubernetes.default.svc
         namespace: "{{ .namespace }}"
       syncPolicy:
-        automated:
-          prune: true
-          selfHeal: true
         syncOptions:
           - CreateNamespace=true
           - ServerSideApply=true
+  # Components choose their sync mode in config.yaml. "manual" is for components whose
+  # failure would stop reconciliation itself (the CNI, Argo CD): drift is still reported
+  # (OutOfSync), but a person triggers the change (ADR 0033).
+  templatePatch: |
+    {{- if eq .sync "automated" }}
+    spec:
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+    {{- end }}
