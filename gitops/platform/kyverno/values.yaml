@@ -1,0 +1,41 @@
+# One replica per controller in the lab. Memory limits are generous on purpose: they are
+# tightened after measuring real usage (ADR 0037).
+features:
+  policyExceptions:
+    enabled: true
+    # Exceptions may only be created in the kyverno namespace, where only platform
+    # administrators can write: a namespace owner cannot exempt their own workloads.
+    namespace: kyverno
+
+admissionController:
+  replicas: 1
+  container:
+    resources:
+      requests: { cpu: 100m, memory: 192Mi }
+      limits: { memory: 512Mi }
+  serviceMonitor:
+    enabled: true
+
+backgroundController:
+  replicas: 1
+  resources:
+    requests: { cpu: 50m, memory: 96Mi }
+    limits: { memory: 384Mi }
+  serviceMonitor:
+    enabled: true
+
+cleanupController:
+  replicas: 1
+  resources:
+    requests: { cpu: 20m, memory: 48Mi }
+    limits: { memory: 192Mi }
+  serviceMonitor:
+    enabled: true
+
+reportsController:
+  replicas: 1
+  resources:
+    requests: { cpu: 50m, memory: 96Mi }
+    limits: { memory: 384Mi }
+  serviceMonitor:
+    enabled: true
