@@ -31,3 +31,5 @@ Process: [0001](0001-record-architecture-decisions.md) · Template: [template.md
 | 0025 | [Store IaC state in out-of-cluster SeaweedFS with locking, versioning and encryption](0025-store-iac-state-in-out-of-cluster-seaweedfs.md) | Accepted |
 | 0026 | [Keep a single secret zero in the OS keychain; generate all other secrets](0026-keep-a-single-secret-zero-in-the-os-keychain.md) | Accepted |
 | 0027 | [Organise the repository by layer and select profiles explicitly](0027-organise-the-repository-by-layer-and-profile.md) | Accepted |
+| 0028 | [Use Cilium as the CNI on every substrate, installed with bootstrap-and-adopt](0028-use-cilium-as-cni-with-bootstrap-and-adopt.md) | Accepted |
+| 0029 | [Pin Kubernetes through the kind provider, by image digest](0029-pin-kubernetes-through-the-kind-provider.md) | Accepted |
