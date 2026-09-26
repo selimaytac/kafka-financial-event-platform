@@ -19,7 +19,7 @@ maintenance, and high availability / disaster recovery, all designed as code.
 
 Start with the [learning track](docs/learning/README.md) for the concepts behind each phase.
 
-> **Status:** Phase 1 (cluster) in progress: a `dev` cluster is built from code in about three minutes. See the [roadmap](#roadmap).
+> **Status:** Phase 1 (cluster) complete: a `dev` cluster is built from code in about three minutes. Phase 2 (platform services) next. See the [roadmap](#roadmap).
 
 ## Highlights
 
@@ -117,7 +117,7 @@ Full index: [docs/adr/](docs/adr/README.md).
 | # | Phase | Scope | Status |
 |---|---|---|---|
 | 0 | Foundation | Repo hygiene, docs skeleton, ADRs, control matrix, CI | ✅ complete |
-| 1 | Cluster | Layered OpenTofu, kind, Argo CD bootstrap, profiles | 🟡 in progress |
+| 1 | Cluster | Layered OpenTofu, kind, Argo CD bootstrap, profiles | ✅ complete |
 | 2 | Platform | Monitoring, logging and retention, Kyverno, Envoy Gateway, cert-manager, secrets | ⚪ planned |
 | 3 | Kafka | Strimzi KRaft, TLS + SCRAM, ACLs, topics as code, Apicurio, Kafbat UI | ⚪ planned |
 | 4 | Apps | trader-sim, order entry, matching engine (EOS), market data, surveillance, post-trade, ClickHouse, Valkey | ⚪ planned |
