@@ -169,3 +169,29 @@ tasks:
       vars: [STACK]
     cmds:
       - scripts/tofu.sh {{.STACK}} {{.PROFILE | default "-"}} {{.CLI_ARGS}}
+
+  cluster:up:
+    desc: "Create or update a cluster end to end: task cluster:up PROFILE=dev [REVISION=main] (-- -auto-approve)"
+    requires:
+      vars: [PROFILE]
+    vars:
+      REVISION: '{{.REVISION | default "main"}}'
+    cmds:
+      - scripts/tofu.sh substrate-kind-shared - init
+      - scripts/tofu.sh substrate-kind-shared - apply {{.CLI_ARGS}}
+      - scripts/tofu.sh substrate-kind {{.PROFILE}} init
+      - scripts/tofu.sh substrate-kind {{.PROFILE}} apply {{.CLI_ARGS}}
+      - scripts/tofu.sh bootstrap {{.PROFILE}} init
+      - scripts/tofu.sh bootstrap {{.PROFILE}} apply -var target_revision={{.REVISION}} {{.CLI_ARGS}}
+    interactive: true
+
+  cluster:down:
+    desc: "Destroy a cluster in reverse order (bootstrap, then substrate): task cluster:down PROFILE=dev (-- -auto-approve)"
+    requires:
+      vars: [PROFILE]
+    cmds:
+      - scripts/tofu.sh bootstrap {{.PROFILE}} init
+      - scripts/tofu.sh bootstrap {{.PROFILE}} destroy {{.CLI_ARGS}}
+      - scripts/tofu.sh substrate-kind {{.PROFILE}} init
+      - scripts/tofu.sh substrate-kind {{.PROFILE}} destroy {{.CLI_ARGS}}
+    interactive: true
