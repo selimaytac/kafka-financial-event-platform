@@ -34,3 +34,4 @@ Process: [0001](0001-record-architecture-decisions.md) · Template: [template.md
 | 0028 | [Use Cilium as the CNI on every substrate, installed with bootstrap-and-adopt](0028-use-cilium-as-cni-with-bootstrap-and-adopt.md) | Accepted |
 | 0029 | [Pin Kubernetes through the kind provider, by image digest](0029-pin-kubernetes-through-the-kind-provider.md) | Accepted |
 | 0030 | [Generate Argo CD Applications with ApplicationSets; OpenTofu owns only the root](0030-generate-applications-with-applicationsets.md) | Accepted |
+| 0031 | [Manage repository settings and branch protection as code](0031-manage-repository-settings-as-code.md) | Accepted |
