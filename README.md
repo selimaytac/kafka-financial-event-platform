@@ -157,6 +157,8 @@ task secrets:init                     # create secret zero (back it up!)
 task foundation:apply                 # state store (SeaweedFS) and state bucket
 task cluster:up PROFILE=dev           # kind + Cilium + Argo CD, then GitOps takes over
 export KUBECONFIG=~/.kube/kfep-dev.yaml
+task pki:ca-cert                      # export the lab root CA (not trusted system-wide)
+# Argo CD: https://argocd.kfep.localhost:8443 (curl --cacert <exported root CA>)
 task cluster:down PROFILE=dev         # tear down in reverse order
 ```
 
