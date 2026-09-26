@@ -11,3 +11,8 @@ defaultRules:
     kubeSchedulerRecording: false
     kubeControllerManager: false
     kubeProxy: false
+  # kind nodes are containers: the clock belongs to the host kernel and the node never
+  # reports its own NTP synchronisation, so these would fire permanently (observed).
+  disabled:
+    NodeClockNotSynchronising: true
+    NodeClockSkewDetected: true
