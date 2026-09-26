@@ -45,6 +45,13 @@ spec:
   # Sync mode comes from config.yaml: "manual" for components whose failure would stop
   # reconciliation itself (the CNI, Argo CD), ADR 0033.
   templatePatch: |
+    {{- if eq (index . "diff" | default "") "server-side" }}
+    metadata:
+      annotations:
+        # Server-side diff only where API-server defaults cause false drift (ADR 0036):
+        # it sends a dry-run apply for every resource on every comparison.
+        argocd.argoproj.io/compare-options: ServerSideDiff=true
+    {{- end }}
     spec:
       sources:
         {{- if hasKey .chart "path" }}
