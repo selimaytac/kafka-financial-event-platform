@@ -20,3 +20,17 @@ configs:
       type: helm
       url: docker.io/envoyproxy
       enableOCI: "true"
+
+# Metrics Services only; the ServiceMonitor lives in the monitoring component (ADR 0037).
+controller:
+  metrics:
+    enabled: true
+server:
+  metrics:
+    enabled: true
+repoServer:
+  metrics:
+    enabled: true
+applicationSet:
+  metrics:
+    enabled: true

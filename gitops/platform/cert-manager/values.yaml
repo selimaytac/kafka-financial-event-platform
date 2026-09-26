@@ -3,3 +3,8 @@ crds:
   enabled: true
   # Keep CRDs (and therefore every Certificate) if the release is ever removed.
   keep: true
+
+# cert-manager is an automated component with retries, so it can own its ServiceMonitor.
+prometheus:
+  servicemonitor:
+    enabled: true
