@@ -158,6 +158,8 @@ tasks:
         rsync -a gitops/ "$work/gitops/"  # the bootstrap stack reads chart versions and values from it
         for dir in $(cd "$work" && find infra/stacks -name versions.tf -exec dirname {} \; | sort); do
           echo "validate $dir"
+          # A missing lock file would be created silently in CI, hiding unpinned providers.
+          test -f "$work/$dir/.terraform.lock.hcl" || { echo "missing $dir/.terraform.lock.hcl (commit it)"; exit 1; }
           tofu -chdir="$work/$dir" init -backend=false -input=false >/dev/null
           tofu -chdir="$work/$dir" validate -no-color
         done
