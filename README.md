@@ -88,7 +88,7 @@ were considered and the trade-offs.
 | Schema registry | Apicurio Registry | Open source; enforces compatibility rules | [0012](docs/adr/0012-use-apicurio-as-schema-registry.md) |
 | Policy | Kyverno | Policies as Kubernetes YAML; testable offline | [0013](docs/adr/0013-use-kyverno-for-policy-as-code.md) |
 | Traffic | Gateway API + Envoy Gateway | Successor to Ingress; same manifests on every substrate | [0014](docs/adr/0014-expose-services-with-gateway-api.md) |
-| Observability | kube-prometheus-stack | Standard stack; Strimzi metrics built in | [0015](docs/adr/0015-use-kube-prometheus-stack-for-observability.md) |
+| Observability | kube-prometheus-stack; explicit limits; symptom-based alerts | Standard stack; every workload bounded; alerts carry runbooks | [0015](docs/adr/0015-use-kube-prometheus-stack-for-observability.md), [0037](docs/adr/0037-measure-and-bound-the-platform-with-kube-prometheus-stack.md) |
 | Kafka UI | Kafbat UI | Open-source; schema and ACL aware | [0016](docs/adr/0016-use-kafbat-ui-for-kafka-inspection.md) |
 | Testing | Unit/integration · manifest/policy · load · chaos | Evidence at every layer | [0017](docs/adr/0017-test-at-four-layers.md) |
 | CI | GitHub Actions | Native to the repository host; reuses local `task` targets | [0018](docs/adr/0018-use-github-actions-for-ci.md) |
@@ -157,6 +157,9 @@ task secrets:init                     # create secret zero (back it up!)
 task foundation:apply                 # state store (SeaweedFS) and state bucket
 task cluster:up PROFILE=dev           # kind + Cilium + Argo CD, then GitOps takes over
 export KUBECONFIG=~/.kube/kfep-dev.yaml
+task pki:ca-cert                      # export the lab root CA (not trusted system-wide)
+# Argo CD: https://argocd.kfep.localhost:8443   Grafana: https://grafana.kfep.localhost:8443
+# (curl --cacert <exported root CA>; Grafana admin password: task grafana:password)
 task cluster:down PROFILE=dev         # tear down in reverse order
 ```
 

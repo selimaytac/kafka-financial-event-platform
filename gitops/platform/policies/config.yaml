@@ -1,0 +1,6 @@
+# Platform-specific policies and justified exceptions (ADR 0038).
+component: policies
+sync: automated
+namespace: kyverno
+chart:
+  path: gitops/platform/policies/chart

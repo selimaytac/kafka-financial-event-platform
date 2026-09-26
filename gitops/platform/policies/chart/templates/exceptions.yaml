@@ -1,0 +1,41 @@
+# Exceptions are code: each one names the policies it bypasses, matches as narrowly as
+# possible and states why. They can only be created in the kyverno namespace.
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: node-exporter-host-access
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    kfep.io/justification: >-
+      node-exporter reads node-level metrics: it needs the host network and PID namespaces
+      and read-only host paths. Scoped to its pods in the monitoring namespace.
+spec:
+  policyRefs:
+    - { name: disallow-host-namespaces, kind: ValidatingPolicy }
+    - { name: disallow-host-path, kind: ValidatingPolicy }
+    - { name: disallow-host-ports, kind: ValidatingPolicy }
+    - { name: restrict-volume-types, kind: ValidatingPolicy }
+  matchConditions:
+    - name: node-exporter-pods
+      expression: >-
+        object.metadata.namespace == 'monitoring' &&
+        object.metadata.?labels['app.kubernetes.io/name'].orValue('') == 'prometheus-node-exporter'
+{{- if .Values.exceptions.localPathStorage }}
+---
+apiVersion: policies.kyverno.io/v1
+kind: PolicyException
+metadata:
+  name: local-path-provisioner-helpers
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    kfep.io/justification: >-
+      kind's local-path provisioner creates short-lived helper pods with hostPath volumes to
+      prepare each PersistentVolume. Scoped to the local-path-storage namespace.
+spec:
+  policyRefs:
+    - { name: disallow-host-path, kind: ValidatingPolicy }
+    - { name: restrict-volume-types, kind: ValidatingPolicy }
+  matchConditions:
+    - name: local-path-storage
+      expression: "object.metadata.namespace == 'local-path-storage'"
+{{- end }}

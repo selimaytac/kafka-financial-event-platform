@@ -1,0 +1,36 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: platform
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+  parametersRef:
+    group: gateway.envoyproxy.io
+    kind: EnvoyProxy
+    name: platform
+    namespace: {{ .Release.Namespace }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: platform
+  namespace: {{ .Release.Namespace }}
+spec:
+  gatewayClassName: platform
+  listeners:
+    - name: https
+      protocol: HTTPS
+      port: 443
+      hostname: "*.{{ .Values.domain }}"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: platform-gateway-tls
+      allowedRoutes:
+        # Only namespaces labelled for gateway access may attach routes. Gateway API's own
+        # mechanism: it holds even if the policy engine is down (ADR 0038).
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              kfep.io/gateway-access: "true"

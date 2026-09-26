@@ -1,0 +1,23 @@
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: platform
+  namespace: {{ .Release.Namespace }}
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyDeployment:
+        replicas: 1
+      envoyService:
+        type: {{ .Values.service.type }}
+        externalTrafficPolicy: {{ .Values.service.externalTrafficPolicy }}
+        {{- with .Values.service.nodePort }}
+        patch:
+          type: StrategicMerge
+          value:
+            spec:
+              ports:
+                - port: 443
+                  nodePort: {{ . }}
+        {{- end }}

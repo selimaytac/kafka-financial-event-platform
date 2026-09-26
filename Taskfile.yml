@@ -2,7 +2,7 @@
 version: "3"
 
 vars:
-  REQUIRED_TOOLS: docker kind kubectl helm tofu pre-commit gitleaks
+  REQUIRED_TOOLS: docker kind kubectl helm tofu pre-commit gitleaks kubeconform kyverno
   # Secret zero (ADR 0026): state encryption passphrase in the OS keychain (macOS `security` CLI).
   KEYCHAIN_SERVICE: platform-labs.kafka-financial-event-platform.tofu-state
   STORE_DIR: infra/stacks/foundation/store
@@ -11,8 +11,9 @@ vars:
 # Shared by every OpenTofu task. The passphrase comes from TOFU_STATE_PASSPHRASE
 # when set (CI, hosts without keychain support), otherwise from the OS keychain.
 env:
+  # Lab-owned provider cache: ~/.terraform.d may belong to other tools on the host.
   TF_PLUGIN_CACHE_DIR:
-    sh: echo "$HOME/.terraform.d/plugin-cache"
+    sh: echo "${PLATFORM_DATA_DIR:-$HOME/platform-labs-data/kafka-financial-event-platform}/plugin-cache"
 
 tasks:
   default:
@@ -182,10 +183,42 @@ tasks:
       - scripts/tofu.sh substrate-kind-shared - init
       - scripts/tofu.sh substrate-kind-shared - apply {{.CLI_ARGS}}
       - scripts/tofu.sh substrate-kind {{.PROFILE}} init
-      - scripts/tofu.sh substrate-kind {{.PROFILE}} apply {{.CLI_ARGS}}
+      # The kind provider errors instead of planning a re-create when a recorded cluster is
+      # gone (e.g. after a Docker reset). Detect that case and replace without refreshing.
+      - |
+        extra=""
+        if scripts/tofu.sh substrate-kind {{.PROFILE}} state list 2>/dev/null | grep -q kind_cluster \
+           && ! kind get clusters 2>/dev/null | grep -qx "kfep-{{.PROFILE}}"; then
+          echo "kfep-{{.PROFILE}} is recorded in state but missing in Docker: re-creating it"
+          extra="-refresh=false -replace=module.cluster.kind_cluster.this"
+        fi
+        scripts/tofu.sh substrate-kind {{.PROFILE}} apply $extra {{.CLI_ARGS}}
       - scripts/tofu.sh bootstrap {{.PROFILE}} init
       - scripts/tofu.sh bootstrap {{.PROFILE}} apply -var target_revision={{.REVISION}} {{.CLI_ARGS}}
+      - task: argo:adopt
+        vars: { PROFILE: "{{.PROFILE}}" }
     interactive: true
+
+  argo:adopt:
+    desc: "Complete bootstrap-and-adopt: first sync of manual-sync components (ADR 0033): task argo:adopt PROFILE=dev"
+    requires:
+      vars: [PROFILE]
+    env:
+      KUBECONFIG:
+        sh: echo "$HOME/.kube/kfep-{{.PROFILE}}.yaml"
+    cmds:
+      # Resources installed by the bootstrap carry no Argo CD tracking annotation until the
+      # first sync. Automated components get it by themselves; manual ones need this sync.
+      - |
+        for config in gitops/platform/*/config.yaml; do
+          grep -q '^sync: manual' "$config" || continue
+          app=$(awk '/^component:/ {print $2}' "$config")
+          for i in $(seq 1 60); do kubectl -n argocd get application "$app" >/dev/null 2>&1 && break; sleep 5; done
+          opts=$(kubectl -n argocd get application "$app" -o jsonpath='{.spec.syncPolicy.syncOptions}')
+          kubectl -n argocd patch application "$app" --type merge \
+            -p "{\"operation\":{\"initiatedBy\":{\"username\":\"task argo:adopt\"},\"sync\":{\"syncOptions\":${opts:-[]}}}}" >/dev/null
+          echo "adoption sync triggered: $app"
+        done
 
   cluster:down:
     desc: "Destroy a cluster in reverse order (bootstrap, then substrate): task cluster:down PROFILE=dev (-- -auto-approve)"
@@ -197,3 +230,99 @@ tasks:
       - scripts/tofu.sh substrate-kind {{.PROFILE}} init
       - scripts/tofu.sh substrate-kind {{.PROFILE}} destroy {{.CLI_ARGS}}
     interactive: true
+
+  argo:sync:
+    desc: "Trigger a sync of an Argo CD Application (for manual-sync components): task argo:sync APP=cilium [PROFILE=dev]"
+    requires:
+      vars: [APP]
+    vars:
+      PROFILE: '{{.PROFILE | default "dev"}}'
+    env:
+      KUBECONFIG:
+        sh: echo "$HOME/.kube/kfep-{{.PROFILE}}.yaml"
+    cmds:
+      - kubectl -n argocd get application {{.APP}} -o jsonpath='{.status.sync.status}{"\n"}'
+      # Pass the Application's own sync options: a manual operation does not inherit them,
+      # and without ServerSideApply large objects fail on the last-applied annotation limit.
+      - |
+        opts=$(kubectl -n argocd get application {{.APP}} -o jsonpath='{.spec.syncPolicy.syncOptions}')
+        kubectl -n argocd patch application {{.APP}} --type merge \
+          -p "{\"operation\":{\"initiatedBy\":{\"username\":\"task argo:sync\"},\"sync\":{\"syncOptions\":${opts:-[]}}}}"
+
+  gitops:check:
+    desc: Render every GitOps component for every profile and substrate and validate the manifests
+    cmds:
+      - python3 scripts/gitops_check.py
+
+  # Host operations (ADR 0034, docs/runbooks/host-operations.md).
+  lab:status:
+    desc: Show lab containers and their memory use
+    cmds:
+      - scripts/lab.sh status
+
+  lab:stop:
+    desc: "L0: stop the lab (clusters, load balancer, state store) without removing anything"
+    cmds:
+      - scripts/lab.sh stop
+
+  lab:start:
+    desc: "L0/L1: start a stopped lab and wait for nodes"
+    cmds:
+      - scripts/lab.sh start
+
+  lab:backup:
+    desc: "L3 prevention: consistent archive of the state store data and foundation state"
+    cmds:
+      - scripts/lab.sh backup {{.CLI_ARGS}}
+
+  lab:restore-state:
+    desc: "L3: restore state data from an archive: task lab:restore-state -- <archive>"
+    cmds:
+      - scripts/lab.sh restore-state {{.CLI_ARGS}}
+
+  lab:restore:
+    desc: "L2: rebuild everything from code after a Docker reset: task lab:restore PROFILE=dev (-- -auto-approve)"
+    requires:
+      vars: [PROFILE]
+    cmds:
+      - task: foundation:apply
+      - task: cluster:up
+        vars: { PROFILE: "{{.PROFILE}}", REVISION: '{{.REVISION | default "main"}}' }
+
+  lab:drill:docker-reset:
+    desc: "Drill for L2: remove this lab's containers, clusters and images (nothing else)"
+    prompt: This deletes the lab's clusters and images (state data on the host is kept). Continue?
+    cmds:
+      - scripts/lab.sh drill-docker-reset
+
+  lab:purge:
+    desc: "L4: remove everything this lab placed on the machine (asks for confirmation)"
+    interactive: true
+    cmds:
+      - scripts/lab.sh purge
+
+  pki:ca-cert:
+    desc: "Write the lab root CA certificate (public, not a secret) for curl --cacert; it is NOT added to any trust store"
+    vars:
+      OUT:
+        sh: echo "${PLATFORM_DATA_DIR:-$HOME/platform-labs-data/kafka-financial-event-platform}/pki/root-ca.pem"
+    cmds:
+      - mkdir -p "$(dirname {{.OUT}})"
+      - scripts/tofu.sh pki - output -raw root_ca_cert_pem > {{.OUT}}
+      - 'echo "written: {{.OUT}}  (curl --cacert {{.OUT}} https://argocd.kfep.localhost:8443/)"'
+
+  grafana:password:
+    desc: "Print the Grafana admin password of a profile: task grafana:password [PROFILE=dev]"
+    vars:
+      PROFILE: '{{.PROFILE | default "dev"}}'
+    env:
+      KUBECONFIG:
+        sh: echo "$HOME/.kube/kfep-{{.PROFILE}}.yaml"
+    cmds:
+      - kubectl -n monitoring get secret grafana-admin -o jsonpath='{.data.admin-password}' | base64 -d; echo
+    silent: true
+
+  policies:test:
+    desc: Run behavioural tests for the platform policies with the Kyverno CLI
+    cmds:
+      - scripts/policies_test.sh
