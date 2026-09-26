@@ -8,8 +8,8 @@ resource "docker_image" "cloud_provider_kind" {
 }
 
 resource "docker_container" "cloud_provider_kind" {
-  name    = "cloud-provider-kind"
-  image   = docker_image.cloud_provider_kind.image_id
+  name  = "cloud-provider-kind"
+  image = docker_image.cloud_provider_kind.image_id
   # Lab containers never start by themselves when Docker starts (the lab is a guest,
   # ADR 0034); `task lab:start` starts them explicitly.
   restart = "no"

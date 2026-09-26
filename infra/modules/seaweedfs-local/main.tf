@@ -29,8 +29,8 @@ resource "docker_image" "seaweedfs" {
 }
 
 resource "docker_container" "seaweedfs" {
-  name    = var.container_name
-  image   = docker_image.seaweedfs.image_id
+  name  = var.container_name
+  image = docker_image.seaweedfs.image_id
   # Lab containers never start by themselves when Docker starts (the lab is a guest,
   # ADR 0034); `task lab:start` starts them explicitly.
   restart = "no"
