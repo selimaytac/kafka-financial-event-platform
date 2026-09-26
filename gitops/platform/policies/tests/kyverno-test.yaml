@@ -1,0 +1,31 @@
+# Behavioural tests: each policy has cases that must pass and cases that must fail.
+# Run with `task policies:test` (renders the chart, then runs the Kyverno CLI).
+apiVersion: cli.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: platform-policies
+policies:
+  - rendered-policies.yaml
+resources:
+  - resources.yaml
+results:
+  - policy: require-memory-limits
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [compliant, pinned-by-digest, latest-tag, no-tag]
+    result: pass
+  - policy: require-memory-limits
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [no-memory-limit]
+    result: fail
+  - policy: disallow-latest-tag
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [compliant, pinned-by-digest, no-memory-limit]
+    result: pass
+  - policy: disallow-latest-tag
+    isValidatingPolicy: true
+    kind: Pod
+    resources: [latest-tag, no-tag]
+    result: fail

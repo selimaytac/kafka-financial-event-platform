@@ -1,0 +1,29 @@
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: disallow-latest-tag
+  annotations:
+    policies.kyverno.io/title: Disallow latest or missing image tags
+    policies.kyverno.io/description: >-
+      Images must be pinned by digest or by an explicit tag other than "latest"; an image
+      without a tag means "latest" (ADR 0024).
+spec:
+  validationActions: [{{ .Values.disallowLatestTag.action | replace "Enforce" "Deny" }}]
+  failurePolicy: Fail
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [pods]
+  variables:
+    - name: images
+      expression: "object.spec.containers.map(c, c.image)"
+  validations:
+    - expression: >-
+        variables.images.all(i, i.contains('@sha256:') ||
+        (i.substring(i.lastIndexOf('/') + 1).contains(':') && !i.endsWith(':latest')))
+      messageExpression: >-
+        'images without a pinned tag or digest: ' + variables.images.filter(i,
+        !(i.contains('@sha256:') || (i.substring(i.lastIndexOf('/') + 1).contains(':') &&
+        !i.endsWith(':latest')))).join(', ')
