@@ -28,3 +28,6 @@ Process: [0001](0001-record-architecture-decisions.md) · Template: [template.md
 | 0022 | [Build a deterministic price-time priority matching engine on Kafka](0022-build-a-deterministic-price-time-matching-engine.md) | Accepted |
 | 0023 | [Present the repository as a learning project and separate learning notes from operational docs](0023-separate-learning-notes-from-operational-docs.md) | Accepted |
 | 0024 | [Protect `main` with a ruleset and pin all third-party code by commit SHA](0024-protect-main-and-pin-third-party-code.md) | Accepted |
+| 0025 | [Store IaC state in out-of-cluster SeaweedFS with locking, versioning and encryption](0025-store-iac-state-in-out-of-cluster-seaweedfs.md) | Accepted |
+| 0026 | [Keep a single secret zero in the OS keychain; generate all other secrets](0026-keep-a-single-secret-zero-in-the-os-keychain.md) | Accepted |
+| 0027 | [Organise the repository by layer and select profiles explicitly](0027-organise-the-repository-by-layer-and-profile.md) | Accepted |
