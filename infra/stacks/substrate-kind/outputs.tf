@@ -1,5 +1,10 @@
 # Contract shared by every substrate stack (kind, Proxmox/Talos): the bootstrap layer
 # only depends on these outputs, never on the substrate itself (ADR 0003).
+output "substrate" {
+  description = "Substrate type; selects values-substrate-<type>.yaml in the GitOps tree."
+  value       = "kind"
+}
+
 output "cluster_name" {
   value = module.cluster.name
 }
