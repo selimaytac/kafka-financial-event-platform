@@ -40,3 +40,4 @@ Process: [0001](0001-record-architecture-decisions.md) · Template: [template.md
 | 0034 | [Run the lab as a guest on its host: minimal footprint, explicit start, graded recovery](0034-run-the-lab-as-a-guest-on-its-host.md) | Accepted |
 | 0035 | [Terminate TLS at a single gateway, issued from a lab PKI outside the clusters](0035-terminate-tls-at-a-single-gateway-with-a-lab-pki.md) | Accepted |
 | 0036 | [Inject cluster parameters once, support all chart sources, and diff server-side](0036-inject-cluster-parameters-once-and-diff-server-side.md) | Accepted |
+| 0037 | [Measure and bound the platform: metrics, alerts and explicit resource limits](0037-measure-and-bound-the-platform-with-kube-prometheus-stack.md) | Accepted |

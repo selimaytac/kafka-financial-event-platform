@@ -17,6 +17,8 @@ machine.
 |---|---|---|
 | Entry point | Port 443 | Privileged, likely in use by other tools |
 | | **127.0.0.1 on a lab-specific high port** | Non-standard URL port |
+| Host CPU | No cap | Node containers can use every CPU given to Docker; a start-up burst can saturate the host |
+| | **CPU cap per node container, per profile (`docker update --cpus`)** | Slower starts; memory is not capped (the kubelet would not see it) |
 | Autostart | `unless-stopped` | Lab consumes resources whenever Docker starts |
 | | **`restart = no`; explicit `task lab:start`** | One extra command |
 | TLS trust | Trust the lab CA system-wide | Large blast radius if the key leaks |
@@ -27,6 +29,8 @@ machine.
 ## Decision
 
 - Lab endpoints bind to 127.0.0.1 on high ports; lab containers do not restart on their own.
+- kind node containers get a CPU cap from the profile (`dev`: 2 + 2 CPUs), applied by the
+  kind module after the cluster is created.
 - The lab CA is name-constrained to `kfep.localhost` and is not added to any trust store by
   default.
 - All host footprint is inventoried in [host-footprint](../operations/host-footprint.md) and
