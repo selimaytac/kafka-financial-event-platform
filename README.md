@@ -110,7 +110,7 @@ Full index: [docs/adr/](docs/adr/README.md).
 | Substrate | Status |
 |---|---|
 | kind (local, Docker) | Working: `task cluster:up PROFILE=dev` |
-| Proxmox VE + Talos | Designed ([ADR 0005](docs/adr/0005-design-proxmox-talos-as-second-substrate.md)); module not written yet |
+| Proxmox VE + Talos | Code written and validated in CI, never applied ([ADR 0032](docs/adr/0032-implement-the-proxmox-talos-substrate-behind-the-same-contract.md)) |
 
 ## Roadmap
 
