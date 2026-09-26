@@ -44,3 +44,10 @@ repos:
         language: python
         entry: scripts/check_md_links.py
         types: [markdown]
+
+      - id: tofu-fmt
+        name: tofu fmt
+        language: system
+        entry: tofu fmt -check -diff -recursive infra
+        files: \.tf$
+        pass_filenames: false

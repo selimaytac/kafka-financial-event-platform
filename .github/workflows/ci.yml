@@ -30,15 +30,16 @@ jobs:
         with:
           path: ~/.cache/pre-commit
           key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+      # Needed by the tofu-fmt pre-commit hook and by task infra:check.
+      - uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
+        with:
+          tofu_version: 1.12.6
+          tofu_wrapper: false
       - run: pip install pre-commit
       # The gitleaks hook only scans staged changes; the secrets job scans full history.
       - run: task lint
         env:
           SKIP: gitleaks
-      - uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
-        with:
-          tofu_version: 1.12.6
-          tofu_wrapper: false
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/platform-labs-data/kafka-financial-event-platform/plugin-cache
