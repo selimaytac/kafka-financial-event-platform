@@ -326,3 +326,8 @@ tasks:
     desc: Run behavioural tests for the platform policies with the Kyverno CLI
     cmds:
       - scripts/policies_test.sh
+
+  lab:guard:
+    desc: "Host circuit breaker: kill the lab's kind nodes if host load, free memory or swap degrade (run during starts)"
+    cmds:
+      - scripts/lab.sh guard

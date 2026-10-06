@@ -6,7 +6,10 @@
 #   scripts/lab.sh status | start | stop
 #   scripts/lab.sh backup [dir] | restore-state <archive>
 #   scripts/lab.sh drill-docker-reset | purge
+#   scripts/lab.sh guard        (circuit breaker; see guard() below)
 set -euo pipefail
+# Numbers are parsed and printed with a dot regardless of the user's locale.
+export LC_ALL=C
 
 readonly PROJECT="kafka-financial-event-platform"
 readonly DATA_DIR="${PLATFORM_DATA_DIR:-$HOME/platform-labs-data/$PROJECT}"
@@ -128,6 +131,69 @@ INFO
   echo "purged. CLI tools used by this lab are listed in docs/operations/host-footprint.md."
 }
 
+
+# --- Host circuit breaker ----------------------------------------------------------------
+# Pod limits and node CPU caps bound the cluster, not the host: memory pressure, swap and
+# disk I/O during a cold start can still make the host unresponsive. The guard samples the
+# host every few seconds and kills this lab's kind nodes if the host degrades, logging which
+# signal tripped. Thresholds are relative to an idle baseline measured first, and every one
+# can be overridden through the environment.
+num() { tr ',' '.'; }  # some locales print decimal commas
+host_load() {
+  if [[ "$(uname)" == Darwin ]]; then sysctl -n vm.loadavg | num | awk '{print $2}'
+  else awk '{print $1}' /proc/loadavg; fi
+}
+host_free_pct() {
+  if [[ "$(uname)" == Darwin ]]; then memory_pressure -Q 2>/dev/null | awk -F': ' '/free percentage/ {gsub("%","",$2); print $2}'
+  else awk '/MemTotal/ {t=$2} /MemAvailable/ {a=$2} END {printf "%d", a*100/t}' /proc/meminfo; fi
+}
+host_swap_used_mb() {
+  if [[ "$(uname)" == Darwin ]]; then sysctl -n vm.swapusage | num | sed -E 's/.*used = ([0-9.]+)M.*/\1/' | cut -d. -f1
+  else awk '/SwapTotal/ {t=$2} /SwapFree/ {f=$2} END {printf "%d", (t-f)/1024}' /proc/meminfo; fi
+}
+host_cpus() { getconf _NPROCESSORS_ONLN; }
+
+kill_lab_nodes() {
+  local nodes; nodes=$(kind_nodes | awk '{print $1}'; lb_containers)
+  [[ -n "$nodes" ]] && docker kill $nodes >/dev/null 2>&1 || true
+}
+
+guard() {
+  local interval="${GUARD_INTERVAL:-5}" duration="${GUARD_DURATION:-1800}"
+  local log="$DATA_DIR/guard.log" cpus; cpus=$(host_cpus)
+  local load_delta="${GUARD_LOAD_DELTA:-$(( cpus * 3 / 4 ))}"
+  local min_free="${GUARD_MIN_FREE_PCT:-10}" swap_growth="${GUARD_SWAP_GROWTH_MB:-1024}"
+  mkdir -p "$DATA_DIR"
+  echo "guard: measuring idle baseline (${GUARD_BASELINE_SECONDS:-30}s)..." | tee -a "$log"
+  local samples=0 load_sum=0
+  local end=$(( $(date +%s) + ${GUARD_BASELINE_SECONDS:-30} ))
+  while (( $(date +%s) < end )); do
+    load_sum=$(awk -v a="$load_sum" -v b="$(host_load)" 'BEGIN {print a + b}'); samples=$((samples + 1)); sleep "$interval"
+  done
+  local base_load base_swap
+  base_load=$(awk -v s="$load_sum" -v n="$samples" 'BEGIN {printf "%.1f", s / n}')
+  base_swap=$(host_swap_used_mb)
+  local max_load; max_load=$(awk -v b="$base_load" -v d="$load_delta" 'BEGIN {print b + d}')
+  echo "guard: baseline load=$base_load swap=${base_swap}MB; trips at load>$max_load, free<${min_free}%, swap>+${swap_growth}MB (2 samples)" | tee -a "$log"
+  local strikes=0 stop=$(( $(date +%s) + duration ))
+  while (( $(date +%s) < stop )); do
+    local load free swap reason=""
+    load=$(host_load); free=$(host_free_pct); swap=$(host_swap_used_mb)
+    awk -v l="$load" -v m="$max_load" 'BEGIN {exit !(l > m)}' && reason="load $load > $max_load"
+    [[ -n "$free" ]] && (( free < min_free )) && reason="${reason:+$reason; }free memory ${free}% < ${min_free}%"
+    (( swap - base_swap > swap_growth )) && reason="${reason:+$reason; }swap +$((swap - base_swap))MB"
+    echo "$(date +%H:%M:%S) load=$load free=${free}% swap=${swap}MB ${reason:+[$reason]}" >> "$log"
+    if [[ -n "$reason" ]]; then strikes=$((strikes + 1)); else strikes=0; fi
+    if (( strikes >= 2 )); then
+      kill_lab_nodes
+      echo "guard: TRIPPED ($reason) - kind nodes killed; see $log" | tee -a "$log"
+      return 2
+    fi
+    sleep "$interval"
+  done
+  echo "guard: finished after ${duration}s without tripping" | tee -a "$log"
+}
+
 case "${1:-}" in
   status) status ;;
   start) start ;;
@@ -136,5 +202,6 @@ case "${1:-}" in
   restore-state) restore_state "${2:-}" ;;
   drill-docker-reset) drill_docker_reset ;;
   purge) purge ;;
-  *) echo "usage: $0 status|start|stop|backup [dir]|restore-state <archive>|drill-docker-reset|purge" >&2; exit 2 ;;
+  guard) guard ;;
+  *) echo "usage: $0 status|start|stop|backup [dir]|restore-state <archive>|drill-docker-reset|purge|guard" >&2; exit 2 ;;
 esac
