@@ -18,3 +18,14 @@ output "intermediates" {
   }
   sensitive = true
 }
+
+output "openbao_tls" {
+  description = "Server certificate (chain) and key for the secrets store (ADR 0040)."
+  value = {
+    hostname  = var.openbao_hostname
+    cert_pem  = "${tls_locally_signed_cert.openbao.cert_pem}${tls_self_signed_cert.root.cert_pem}"
+    key_pem   = tls_private_key.openbao.private_key_pem
+    not_after = tls_locally_signed_cert.openbao.validity_end_time
+  }
+  sensitive = true
+}

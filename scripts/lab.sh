@@ -14,6 +14,8 @@ export LC_ALL=C
 readonly PROJECT="kafka-financial-event-platform"
 readonly DATA_DIR="${PLATFORM_DATA_DIR:-$HOME/platform-labs-data/$PROJECT}"
 readonly STORE_DATA="$DATA_DIR/seaweedfs"
+readonly SECRETS_STORE="kfep-openbao"  # out-of-cluster OpenBao (ADR 0040)
+readonly SECRETS_DATA="$DATA_DIR/openbao"
 readonly BACKUP_DIR_DEFAULT="$HOME/platform-labs-backups/$PROJECT"
 readonly KEYCHAIN_SERVICE="platform-labs.$PROJECT.tofu-state"
 readonly FOUNDATION_STATES=(infra/stacks/foundation/store/terraform.tfstate infra/stacks/foundation/bucket/terraform.tfstate)
@@ -32,7 +34,7 @@ status() {
 }
 
 stop() {
-  # Reverse of start: workers, control planes, load balancers, then the state store.
+  # Reverse of start: workers, control planes, load balancers, secrets store, state store.
   local workers cps
   workers=$(kind_nodes | awk '$3=="worker"{print $1}')
   cps=$(kind_nodes | awk '$3=="control-plane"{print $1}')
@@ -42,6 +44,7 @@ stop() {
   [[ -n "$cps" ]] && docker stop --time 120 $cps >/dev/null
   local lbs; lbs=$(lb_containers); [[ -n "$lbs" ]] && docker stop $lbs >/dev/null
   docker stop cloud-provider-kind >/dev/null 2>&1 || true
+  docker stop --time 30 "$SECRETS_STORE" >/dev/null 2>&1 || true
   docker stop --time 30 platform-state-store >/dev/null 2>&1 || true
   echo "lab stopped"
 }
@@ -54,11 +57,18 @@ start() {
   [[ -n "$cps" ]] && docker start $cps >/dev/null
   [[ -n "$workers" ]] && docker start $workers >/dev/null
   local lbs; lbs=$(lb_containers); [[ -n "$lbs" ]] && docker start $lbs >/dev/null
-  # Every OpenTofu call needs the state store; it starts accepting requests only once healthy.
-  local store_tries=0
-  until [[ "$(docker inspect -f '{{.State.Health.Status}}' platform-state-store 2>/dev/null)" == healthy ]]; do
-    (( ++store_tries > 60 )) && { echo "state store not healthy after 120 s" >&2; exit 1; }
-    sleep 2
+  # The secrets store sits on the kind network, which exists once a cluster was created.
+  docker start "$SECRETS_STORE" >/dev/null 2>&1 || true
+  # OpenTofu needs the state store and, for bootstrap, the secrets store; both accept
+  # requests only once healthy (OpenBao: unsealed).
+  local name tries
+  for name in platform-state-store "$SECRETS_STORE"; do
+    docker inspect "$name" >/dev/null 2>&1 || continue
+    tries=0
+    until [[ "$(docker inspect -f '{{.State.Health.Status}}' "$name" 2>/dev/null)" == healthy ]]; do
+      (( ++tries > 60 )) && { echo "$name not healthy after 120 s" >&2; exit 1; }
+      sleep 2
+    done
   done
   for cluster in $(kind_nodes | awk '{print $2}' | sort -u); do
     local kubeconfig="$HOME/.kube/${cluster}.yaml"
@@ -79,22 +89,32 @@ backup() {
   local dir="${1:-$BACKUP_DIR_DEFAULT}" ts archive was_running
   ts=$(date -u +%Y%m%dT%H%M%SZ); archive="$dir/kfep-state-$ts.tar.gz"
   mkdir -p "$dir"; chmod 700 "$dir"
-  was_running=$(docker inspect -f '{{.State.Running}}' platform-state-store 2>/dev/null || echo false)
-  # Stop the store so files are copied in a consistent state.
-  [[ "$was_running" == "true" ]] && docker stop --time 30 platform-state-store >/dev/null
-  tar -czf "$archive" -C "$DATA_DIR" seaweedfs -C "$PWD" "${FOUNDATION_STATES[@]}"
+  # Stop both stores so files are copied in a consistent state; the secrets store's data
+  # belongs with the state that references it (ADR 0040).
+  local running=() name dirs=(seaweedfs)
+  for name in platform-state-store "$SECRETS_STORE"; do
+    [[ "$(docker inspect -f '{{.State.Running}}' "$name" 2>/dev/null)" == true ]] && running+=("$name")
+  done
+  [[ ${#running[@]} -gt 0 ]] && docker stop --time 30 "${running[@]}" >/dev/null
+  [[ -d "$SECRETS_DATA" ]] && dirs+=(openbao)
+  tar -czf "$archive" -C "$DATA_DIR" "${dirs[@]}" -C "$PWD" "${FOUNDATION_STATES[@]}"
   chmod 600 "$archive"
-  [[ "$was_running" == "true" ]] && docker start platform-state-store >/dev/null
+  [[ ${#running[@]} -gt 0 ]] && docker start "${running[@]}" >/dev/null
   echo "backup written: $archive ($(du -h "$archive" | cut -f1))"
   echo "state objects are encrypted; the archive is useless without secret zero, which is NOT in it."
+  echo "OpenBao data is sealed with a key that lives only in the (encrypted) state."
 }
 
 restore_state() {
   local archive="${1:?usage: restore-state <archive>}" ts
   [[ -f "$archive" ]] || { echo "no such archive: $archive" >&2; exit 2; }
   ts=$(date -u +%Y%m%dT%H%M%SZ)
-  docker stop --time 30 platform-state-store >/dev/null 2>&1 || true
+  docker stop --time 30 platform-state-store "$SECRETS_STORE" >/dev/null 2>&1 || true
   [[ -d "$STORE_DATA" ]] && mv "$STORE_DATA" "$STORE_DATA.before-restore-$ts"
+  if tar -tzf "$archive" openbao >/dev/null 2>&1; then
+    [[ -d "$SECRETS_DATA" ]] && mv "$SECRETS_DATA" "$SECRETS_DATA.before-restore-$ts"
+    tar -xzf "$archive" -C "$DATA_DIR" openbao
+  fi
   for f in "${FOUNDATION_STATES[@]}"; do [[ -f "$f" ]] && mv "$f" "$f.before-restore-$ts"; done
   mkdir -p "$DATA_DIR"
   tar -xzf "$archive" -C "$DATA_DIR" seaweedfs

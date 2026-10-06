@@ -37,6 +37,13 @@ else
   data_dir="${stack_dir}/.terraform"
 fi
 
+# The secrets store keeps its data next to the state store's, outside the repository.
+lab_data="${PLATFORM_DATA_DIR:-$HOME/platform-labs-data/kafka-financial-event-platform}"
+if [[ "$stack" == "secrets-store" ]]; then
+  mkdir -p "$lab_data/openbao/data"
+  var_args+=(-var="data_dir=$lab_data/openbao")
+fi
+
 TF_VAR_state_passphrase="${TOFU_STATE_PASSPHRASE:-$(security find-generic-password -s "$KEYCHAIN_SERVICE" -w)}"
 export TF_VAR_state_passphrase
 endpoint=$(tofu -chdir="$STORE_DIR" output -raw endpoint)
@@ -51,7 +58,7 @@ if [[ "$stack" == "github" ]]; then
   export GITHUB_TOKEN
 fi
 export TF_DATA_DIR="$PWD/${data_dir}"
-export TF_PLUGIN_CACHE_DIR="${TF_PLUGIN_CACHE_DIR:-${PLATFORM_DATA_DIR:-$HOME/platform-labs-data/kafka-financial-event-platform}/plugin-cache}"
+export TF_PLUGIN_CACHE_DIR="${TF_PLUGIN_CACHE_DIR:-$lab_data/plugin-cache}"
 mkdir -p "$TF_PLUGIN_CACHE_DIR"
 
 command=$1

@@ -193,6 +193,12 @@ tasks:
           extra="-refresh=false -replace=module.cluster.kind_cluster.this"
         fi
         scripts/tofu.sh substrate-kind {{.PROFILE}} apply $extra {{.CLI_ARGS}}
+      # Out-of-cluster secrets store and its data (ADR 0040): shared by every profile and
+      # attached to the kind network, so it follows the first cluster. Idempotent.
+      - scripts/tofu.sh secrets-store - init
+      - scripts/tofu.sh secrets-store - apply {{.CLI_ARGS}}
+      - scripts/tofu.sh secrets - init
+      - scripts/tofu.sh secrets - apply {{.CLI_ARGS}}
       - scripts/tofu.sh bootstrap {{.PROFILE}} init
       # ADDONS overrides the profile's addon list (ADR 0039): unset keeps the profile default,
       # "none" means core only.

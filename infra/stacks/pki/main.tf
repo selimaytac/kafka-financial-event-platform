@@ -54,3 +54,32 @@ resource "tls_locally_signed_cert" "intermediate" {
   early_renewal_hours = 720
   allowed_uses        = ["cert_signing", "crl_signing", "digital_signature"]
 }
+
+# Server certificate for the out-of-cluster secrets store (ADR 0040), issued by the root:
+# OpenBao serves every profile, so it does not belong under a profile's intermediate.
+# Names: the container on the kind network, and loopback for host-side OpenTofu.
+resource "tls_private_key" "openbao" {
+  algorithm   = "ECDSA"
+  ecdsa_curve = "P256"
+}
+
+resource "tls_cert_request" "openbao" {
+  private_key_pem = tls_private_key.openbao.private_key_pem
+  dns_names       = [var.openbao_hostname, "localhost"]
+  ip_addresses    = ["127.0.0.1"]
+
+  subject {
+    common_name  = var.openbao_hostname
+    organization = "kafka-financial-event-platform (lab)"
+  }
+}
+
+resource "tls_locally_signed_cert" "openbao" {
+  cert_request_pem   = tls_cert_request.openbao.cert_request_pem
+  ca_private_key_pem = tls_private_key.root.private_key_pem
+  ca_cert_pem        = tls_self_signed_cert.root.cert_pem
+
+  validity_period_hours = 8760 # 1 year
+  early_renewal_hours   = 720  # renewal shows up in plan 30 days ahead
+  allowed_uses          = ["digital_signature", "key_encipherment", "server_auth"]
+}

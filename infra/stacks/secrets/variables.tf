@@ -9,20 +9,13 @@ variable "state_passphrase" {
   }
 }
 
-variable "domain" {
-  description = "Lab DNS domain; all issued names live under it (RFC 6761 .localhost)."
+variable "state_endpoint" {
+  description = "S3 endpoint of the state store. Supplied by scripts/tofu.sh."
   type        = string
-  default     = "kfep.localhost"
 }
 
 variable "profiles" {
-  description = "Profiles that get an intermediate CA."
+  description = "Profiles that get their own secrets path."
   type        = set(string)
   default     = ["dev", "perf", "dr"]
-}
-
-variable "openbao_hostname" {
-  description = "Container name of the secrets store on the kind network (ADR 0040)."
-  type        = string
-  default     = "kfep-openbao"
 }
