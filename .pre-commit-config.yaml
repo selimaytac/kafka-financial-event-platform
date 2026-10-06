@@ -13,6 +13,8 @@ repos:
     hooks:
       - id: check-yaml
         args: [--allow-multiple-documents]
+        # Helm templates are not YAML until rendered; task gitops:check validates the output.
+        exclude: ^gitops/platform/[^/]+/chart/templates/
       - id: check-merge-conflict
       - id: check-added-large-files
         args: [--maxkb=512]
@@ -44,3 +46,10 @@ repos:
         language: python
         entry: scripts/check_md_links.py
         types: [markdown]
+
+      - id: tofu-fmt
+        name: tofu fmt
+        language: system
+        entry: tofu fmt -check -diff -recursive infra
+        files: \.tf$
+        pass_filenames: false

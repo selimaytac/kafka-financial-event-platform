@@ -1,0 +1,12 @@
+# Delivers secrets from the out-of-cluster OpenBao as Kubernetes Secrets (ADR 0040).
+component: external-secrets
+# Addon: installed only when the profile or ADDONS enables it (ADR 0039).
+tier: addon
+# Ships CRDs that the API server defaults; compare server-side (ADR 0036).
+diff: server-side
+sync: automated
+namespace: external-secrets
+chart:
+  repoURL: https://charts.external-secrets.io
+  name: external-secrets
+  version: 2.12.0

@@ -65,9 +65,13 @@ Namespaces are planned and confirmed in the phase that introduces each component
 | market data / surveillance / post-trade | Downstream consumers of executions | `apps` | _Phase 4_ | [0022](adr/0022-build-a-deterministic-price-time-matching-engine.md) |
 | ClickHouse | Analytical sink and audit store | `clickhouse` | _Phase 4_ | [0010](adr/0010-use-clickhouse-as-analytical-sink.md) |
 | Valkey | Dedup + cache | `apps` | _Phase 4_ | [0011](adr/0011-use-valkey-for-dedup-and-cache.md) |
-| Kyverno | Admission policies | `kyverno` | _Phase 2_ | [0013](adr/0013-use-kyverno-for-policy-as-code.md) |
-| Envoy Gateway | North-south traffic | `envoy-gateway-system` | _Phase 2_ | [0014](adr/0014-expose-services-with-gateway-api.md) |
-| kube-prometheus-stack | Metrics, alerts, dashboards | `monitoring` | _Phase 2_ | [0015](adr/0015-use-kube-prometheus-stack-for-observability.md) |
+| cert-manager | Certificates from the lab intermediate CA | `cert-manager` | `gitops/platform/cert-manager/` | [0035](adr/0035-terminate-tls-at-a-single-gateway-with-a-lab-pki.md) |
+| Envoy Gateway + platform gateway | Single TLS entry point, `*.kfep.localhost` | `envoy-gateway-system` | `gitops/platform/envoy-gateway/`, `gitops/platform/gateway/` | [0014](adr/0014-expose-services-with-gateway-api.md), [0035](adr/0035-terminate-tls-at-a-single-gateway-with-a-lab-pki.md) |
+| OpenBao | Secrets store for every profile, outside the clusters | Docker (host, `kind` network) | `infra/stacks/secrets-store/`, `infra/stacks/secrets/` | [0040](adr/0040-use-an-out-of-cluster-openbao-with-eso.md) |
+| External Secrets Operator | Delivers OpenBao secrets as Kubernetes Secrets (addon) | `external-secrets` | `gitops/platform/external-secrets/` | [0040](adr/0040-use-an-out-of-cluster-openbao-with-eso.md) |
+| Lab PKI | Root CA (outside clusters), per-profile intermediates | OpenTofu state | `infra/stacks/pki/` | [0035](adr/0035-terminate-tls-at-a-single-gateway-with-a-lab-pki.md) |
+| Kyverno | Admission policies (addon) | `kyverno` | `gitops/platform/kyverno/`, `gitops/platform/pod-security/`, `gitops/platform/policies/` | [0013](adr/0013-use-kyverno-for-policy-as-code.md) |
+| kube-prometheus-stack | Metrics, alerts, dashboards; Grafana via the gateway (addon) | `monitoring` | `gitops/platform/monitoring/` | [0015](adr/0015-use-kube-prometheus-stack-for-observability.md), [0037](adr/0037-measure-and-bound-the-platform-with-kube-prometheus-stack.md) |
 
 ## Profiles
 
@@ -76,6 +80,11 @@ Namespaces are planned and confirmed in the phase that introduces each component
 | `dev` | 1 control-plane + 1 worker | 3 combined pods, RF=3, min ISR=2 | Daily |
 | `perf` | Sized for the billion-event run | Dedicated controller and broker pools | On demand |
 | `dr` | Secondary site | Replica of primary | On demand, for drills |
+
+Components are `core` (always installed) or `addon` (`tier` in each `config.yaml`,
+[0039](adr/0039-keep-dev-light-with-core-and-addon-components.md)). `dev` installs the core
+only and enables addons per task (`ADDONS=`); `perf` and `dr` install every addon. Core
+components never depend on an addon.
 
 ## Delivery semantics
 

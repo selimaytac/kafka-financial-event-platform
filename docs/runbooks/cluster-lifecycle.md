@@ -27,6 +27,24 @@
    Use `REVISION=<branch>` only while testing an unmerged branch.
 2. `export KUBECONFIG=~/.kube/kfep-dev.yaml`
 
+`dev` installs the core components only; `perf` and `dr` install every addon
+([0039](../adr/0039-keep-dev-light-with-core-and-addon-components.md)). To change the
+addons of a running cluster, re-run step 1 with `ADDONS`; Argo CD installs or removes them:
+
+| Command | Result |
+|---|---|
+| `task cluster:up PROFILE=dev` | Profile default (`dev`: core only) |
+| `task cluster:up PROFILE=dev ADDONS=external-secrets,monitoring` | Core + monitoring (Grafana, alerts); its login comes from OpenBao |
+| `task cluster:up PROFILE=dev ADDONS=kyverno,pod-security,policies` | Core + policy engine and policies |
+| `task cluster:up PROFILE=dev ADDONS=none` | Core only, also for `perf`/`dr` |
+
+An addon that `requires` another (for example `pod-security` requires `kyverno`,
+`monitoring` requires `external-secrets`) is rejected at plan time unless both are listed.
+
+`cluster:up` also creates or updates the out-of-cluster secrets store (OpenBao) and its
+data before the bootstrap stack ([0040](../adr/0040-use-an-out-of-cluster-openbao-with-eso.md)).
+`cluster:down` removes only this cluster's access to it; secret values are kept.
+
 ### Remove a cluster
 
 1. `task cluster:down PROFILE=dev`: bootstrap first, then the substrate (reverse order).
@@ -40,5 +58,6 @@ bucket versioning.
 ## Verification
 
 - `kubectl get nodes`: all `Ready`.
-- `kubectl -n argocd get applications`: every Application `Synced` and `Healthy`.
+- `kubectl -n argocd get applications`: every Application `Synced` and `Healthy`; only core
+  components and the selected addons are listed.
 - `task tofu STACK=bootstrap PROFILE=dev -- plan`: `No changes`.

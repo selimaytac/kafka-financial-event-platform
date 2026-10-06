@@ -1,0 +1,31 @@
+domain: kfep.localhost
+
+issuer:
+  # ClusterIssuer backed by the per-profile intermediate CA (secret created by the bootstrap).
+  name: kfep-intermediate-ca
+  caSecretName: kfep-intermediate-ca
+
+service:
+  # LoadBalancer on substrates with one; kind overrides it (values-substrate-kind.yaml).
+  type: LoadBalancer
+  nodePort: null
+  # Local keeps the client IP (useful for rate limits and audit logs); a real load
+  # balancer only sends traffic to nodes that run the proxy.
+  externalTrafficPolicy: Local
+
+proxy:
+  # Measured: envoy ~24Mi, shutdown-manager ~22Mi with lab traffic.
+  resources:
+    requests: { cpu: 50m, memory: 64Mi }
+    limits: { memory: 256Mi }
+  shutdownManagerResources:
+    requests: { cpu: 10m, memory: 32Mi }
+    limits: { memory: 64Mi }
+
+routes:
+  argocd:
+    enabled: true
+    host: argocd
+    namespace: argocd
+    service: argocd-server
+    port: 80

@@ -5,12 +5,22 @@ output "substrate" {
   value       = "kind"
 }
 
+output "gateway_url_port" {
+  description = "Host port for https://<name>.<domain>:<port>."
+  value       = var.gateway_host_port
+}
+
 output "cluster_name" {
   value = module.cluster.name
 }
 
 output "endpoint" {
   value = module.cluster.endpoint
+}
+
+output "internal_endpoint" {
+  description = "API server address as seen from the kind Docker network (the out-of-cluster secrets store calls it, ADR 0040)."
+  value       = "https://${module.cluster.name}-control-plane:6443"
 }
 
 output "kubeconfig_path" {

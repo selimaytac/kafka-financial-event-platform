@@ -31,6 +31,9 @@ Background: [Secret zero](../learning/concepts/secret-zero.md).
 
 ## Consequences
 
+- Extended by [0040](0040-use-an-out-of-cluster-openbao-with-eso.md): application secrets live in
+  an out-of-cluster OpenBao whose seal key and admin login are generated values in encrypted
+  state, so secret zero remains the only hand-managed secret.
 - Losing the passphrase makes all state unreadable: it must be backed up in a password
   manager.
 - Phase 2 moves secret zero and generated secrets to OpenBao; the chain stays the same.

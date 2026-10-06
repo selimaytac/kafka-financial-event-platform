@@ -1,0 +1,45 @@
+# Test fixtures for the platform policies (task policies:test).
+apiVersion: v1
+kind: Pod
+metadata: { name: compliant, namespace: apps }
+spec:
+  containers:
+    - name: app
+      image: registry.example/app:1.2.3
+      resources: { limits: { memory: 128Mi } }
+---
+apiVersion: v1
+kind: Pod
+metadata: { name: pinned-by-digest, namespace: apps }
+spec:
+  containers:
+    - name: app
+      image: registry.example/app@sha256:0000000000000000000000000000000000000000000000000000000000000000
+      resources: { limits: { memory: 128Mi } }
+---
+apiVersion: v1
+kind: Pod
+metadata: { name: no-memory-limit, namespace: apps }
+spec:
+  containers:
+    - name: app
+      image: registry.example/app:1.2.3
+      resources: { requests: { memory: 64Mi } }
+---
+apiVersion: v1
+kind: Pod
+metadata: { name: latest-tag, namespace: apps }
+spec:
+  containers:
+    - name: app
+      image: registry.example/app:latest
+      resources: { limits: { memory: 128Mi } }
+---
+apiVersion: v1
+kind: Pod
+metadata: { name: no-tag, namespace: apps }
+spec:
+  containers:
+    - name: app
+      image: registry.example:5000/app
+      resources: { limits: { memory: 128Mi } }

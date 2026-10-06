@@ -75,9 +75,10 @@ were considered and the trade-offs.
 | Local substrate | kind (1 control-plane + 1 worker in `dev`) | Upstream Kubernetes, multi-node, IaC-friendly | [0004](docs/adr/0004-use-kind-for-local-substrate.md) |
 | On-prem substrate | Proxmox VE + Talos Linux | Bank-like on-prem target; immutable, declarative OS | [0005](docs/adr/0005-design-proxmox-talos-as-second-substrate.md) |
 | Infrastructure as code | OpenTofu | Open-source (MPL-2.0); Terraform is now BUSL | [0006](docs/adr/0006-use-opentofu-for-infrastructure-as-code.md) |
-| GitOps | Argo CD with ApplicationSets | Drift detection, self-heal, auditable changes; one directory per component | [0007](docs/adr/0007-use-argo-cd-for-gitops.md), [0030](docs/adr/0030-generate-applications-with-applicationsets.md) |
+| GitOps | Argo CD with ApplicationSets; core components always, addons on demand | Drift detection, self-heal, auditable changes; `dev` stays light | [0007](docs/adr/0007-use-argo-cd-for-gitops.md), [0030](docs/adr/0030-generate-applications-with-applicationsets.md), [0039](docs/adr/0039-keep-dev-light-with-core-and-addon-components.md) |
 | IaC state | SeaweedFS outside the clusters; locking, versioning, encryption | Chosen by a spike: the alternative silently ignored locks | [0025](docs/adr/0025-store-iac-state-in-out-of-cluster-seaweedfs.md) |
 | Secrets bootstrap | One secret zero in the OS keychain; the rest generated | One hand-managed secret; rotation by `apply` | [0026](docs/adr/0026-keep-a-single-secret-zero-in-the-os-keychain.md) |
+| Secrets management | OpenBao outside the clusters, External Secrets Operator inside | Secrets survive rebuilds; Git holds references only; Vault-compatible API (MPL-2.0) | [0040](docs/adr/0040-use-an-out-of-cluster-openbao-with-eso.md) |
 | Repository layout | Layers and stacks; profile chosen explicitly per command | Blast radius per stack; no wrong-workspace accidents | [0027](docs/adr/0027-organise-the-repository-by-layer-and-profile.md) |
 | CNI | Cilium on every substrate, bootstrap-and-adopt | Same NetworkPolicy semantics everywhere; Hubble flow visibility | [0028](docs/adr/0028-use-cilium-as-cni-with-bootstrap-and-adopt.md) |
 | Kubernetes version | 1.35 via the kind provider, pinned by digest | Declarative cluster; a real upgrade path for Phase 8 | [0029](docs/adr/0029-pin-kubernetes-through-the-kind-provider.md) |
@@ -86,9 +87,9 @@ were considered and the trade-offs.
 | Analytical sink | ClickHouse (Altinity operator) | High ingest, compression, append-only audit | [0010](docs/adr/0010-use-clickhouse-as-analytical-sink.md) |
 | Cache / dedup | Valkey | Redis-compatible, BSD-licensed | [0011](docs/adr/0011-use-valkey-for-dedup-and-cache.md) |
 | Schema registry | Apicurio Registry | Open source; enforces compatibility rules | [0012](docs/adr/0012-use-apicurio-as-schema-registry.md) |
-| Policy | Kyverno | Policies as Kubernetes YAML; testable offline | [0013](docs/adr/0013-use-kyverno-for-policy-as-code.md) |
+| Policy | Kyverno; baseline pod security, memory limits and pinned images enforced | Policies as Kubernetes YAML; every rendered workload checked in CI | [0013](docs/adr/0013-use-kyverno-for-policy-as-code.md), [0038](docs/adr/0038-enforce-platform-policies-with-kyverno.md) |
 | Traffic | Gateway API + Envoy Gateway | Successor to Ingress; same manifests on every substrate | [0014](docs/adr/0014-expose-services-with-gateway-api.md) |
-| Observability | kube-prometheus-stack | Standard stack; Strimzi metrics built in | [0015](docs/adr/0015-use-kube-prometheus-stack-for-observability.md) |
+| Observability | kube-prometheus-stack; explicit limits; symptom-based alerts | Standard stack; every workload bounded; alerts carry runbooks | [0015](docs/adr/0015-use-kube-prometheus-stack-for-observability.md), [0037](docs/adr/0037-measure-and-bound-the-platform-with-kube-prometheus-stack.md) |
 | Kafka UI | Kafbat UI | Open-source; schema and ACL aware | [0016](docs/adr/0016-use-kafbat-ui-for-kafka-inspection.md) |
 | Testing | Unit/integration · manifest/policy · load · chaos | Evidence at every layer | [0017](docs/adr/0017-test-at-four-layers.md) |
 | CI | GitHub Actions | Native to the repository host; reuses local `task` targets | [0018](docs/adr/0018-use-github-actions-for-ci.md) |
@@ -118,14 +119,14 @@ Full index: [docs/adr/](docs/adr/README.md).
 |---|---|---|---|
 | 0 | Foundation | Repo hygiene, docs skeleton, ADRs, control matrix, CI | ✅ complete |
 | 1 | Cluster | Layered OpenTofu, kind, Argo CD bootstrap, profiles | ✅ complete |
-| 2 | Platform | Monitoring, logging and retention, Kyverno, Envoy Gateway, cert-manager, secrets | ⚪ planned |
+| 2 | Platform | Envoy Gateway + cert-manager ✅, monitoring ✅, Kyverno (enforced) ✅, secrets (OpenBao + ESO) ✅, core/addon split ✅; logging and retention, UI authentication | 🟡 in progress |
 | 3 | Kafka | Strimzi KRaft, TLS + SCRAM, ACLs, topics as code, Apicurio, Kafbat UI | ⚪ planned |
 | 4 | Apps | trader-sim, order entry, matching engine (EOS), market data, surveillance, post-trade, ClickHouse, Valkey | ⚪ planned |
 | 5 | Tests | Unit/integration, manifest/policy, load, chaos | ⚪ planned |
 | 6 | Billion run | Tuning, 1B run, benchmark report, dashboards | ⚪ planned |
 | 7 | Resilience | HA scenarios, backup/restore, DR drills with measured RPO/RTO | ⚪ planned |
 | 8 | Lifecycle | Upgrade scenarios, maintenance plans, rollback | ⚪ planned |
-| + | CI | Lint and secret scan ✅; tests, manifest and policy validation per phase | 🟡 ongoing |
+| + | CI | Lint and secret scan ✅; IaC validation ✅; manifest render + schema validation ✅; policy tests and workload conformance ✅; app tests per phase | 🟡 ongoing |
 | + | Governance | Control matrix updated every phase | 🟡 ongoing |
 
 ## Documentation
@@ -155,8 +156,13 @@ task tools:check                      # verify required CLIs
 task setup                            # install git hooks
 task secrets:init                     # create secret zero (back it up!)
 task foundation:apply                 # state store (SeaweedFS) and state bucket
-task cluster:up PROFILE=dev           # kind + Cilium + Argo CD, then GitOps takes over
+task lab:guard                        # optional, second terminal: host circuit breaker
+task cluster:up PROFILE=dev           # kind + Cilium + Argo CD, then GitOps installs the core
+task cluster:up PROFILE=dev ADDONS=external-secrets,monitoring   # add optional components (ADR 0039)
 export KUBECONFIG=~/.kube/kfep-dev.yaml
+task pki:ca-cert                      # export the lab root CA (not trusted system-wide)
+# Argo CD: https://argocd.kfep.localhost:8443   Grafana (monitoring): https://grafana.kfep.localhost:8443
+# (curl --cacert <exported root CA>; Grafana admin password: task grafana:password)
 task cluster:down PROFILE=dev         # tear down in reverse order
 ```
 

@@ -8,9 +8,11 @@ resource "docker_image" "cloud_provider_kind" {
 }
 
 resource "docker_container" "cloud_provider_kind" {
-  name    = "cloud-provider-kind"
-  image   = docker_image.cloud_provider_kind.image_id
-  restart = "unless-stopped"
+  name  = "cloud-provider-kind"
+  image = docker_image.cloud_provider_kind.image_id
+  # Lab containers never start by themselves when Docker starts (the lab is a guest,
+  # ADR 0034); `task lab:start` starts them explicitly.
+  restart = "no"
 
   # Watches the Docker API for kind clusters and creates load-balancer containers.
   # Mounting the Docker socket is root-equivalent on the Docker host; accepted locally.

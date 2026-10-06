@@ -1,0 +1,10 @@
+# Gateway API controller (ADR 0014). Gateways, listeners and TLS live in the "gateway" component.
+deployment:
+  replicas: 1
+# Hook Job that generates the control-plane certificates; needs limits once
+# require-memory-limits is enforced (ADR 0038).
+certgen:
+  job:
+    resources:
+      requests: { cpu: 10m, memory: 32Mi }
+      limits: { memory: 64Mi }

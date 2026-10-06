@@ -1,0 +1,10 @@
+# Read by the platform ApplicationSet (and the CI render check).
+component: cert-manager
+# Core: always installed; never depends on an addon (ADR 0039).
+tier: core
+sync: automated
+namespace: cert-manager
+chart:
+  repoURL: https://charts.jetstack.io
+  name: cert-manager
+  version: v1.21.2

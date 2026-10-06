@@ -1,0 +1,10 @@
+# Local chart in this repository: the platform's single entry point (ADR 0035).
+component: gateway
+# Core: always installed; never depends on an addon (ADR 0039).
+tier: core
+# Gateway API resources are defaulted by the API server; compare server-side (ADR 0036).
+diff: server-side
+sync: automated
+namespace: envoy-gateway-system
+chart:
+  path: gitops/platform/gateway/chart

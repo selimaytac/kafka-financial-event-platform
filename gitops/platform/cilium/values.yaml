@@ -7,9 +7,18 @@ kubeProxyReplacement: false
 
 operator:
   replicas: 2
+  prometheus:
+    enabled: true
+  dashboards:
+    enabled: true
 
 hubble:
   enabled: true
+  metrics:
+    # Flow metrics for segmentation evidence; each adds series, so keep the list short.
+    enabled: [dns, drop, tcp, flow]
+    dashboards:
+      enabled: true
   relay:
     enabled: true
   ui:
@@ -19,3 +28,9 @@ hubble:
       # The default ("helm") generates new certificates on every render, which leaves a
       # GitOps controller permanently out of sync. A CronJob generates them in-cluster.
       method: cronJob
+
+# Metrics endpoints only; the monitors live in the monitoring component (ADR 0037).
+prometheus:
+  enabled: true
+dashboards:
+  enabled: true

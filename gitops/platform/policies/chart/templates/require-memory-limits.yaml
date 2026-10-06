@@ -1,0 +1,28 @@
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: require-memory-limits
+  annotations:
+    policies.kyverno.io/title: Require memory limits
+    policies.kyverno.io/description: >-
+      Every container must declare a memory limit, so one workload cannot exhaust a node
+      (ADR 0037). CPU limits are not required: CPU is throttled, not killed.
+spec:
+  validationActions: [{{ .Values.requireMemoryLimits.action | replace "Enforce" "Deny" }}]
+  # Fail only when enforced: an audit-only policy must not block pods while Kyverno is
+  # down or disabled (ADR 0039).
+  failurePolicy: {{ if eq .Values.requireMemoryLimits.action "Enforce" }}Fail{{ else }}Ignore{{ end }}
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [pods]
+  validations:
+    - expression: >-
+        object.spec.containers.all(c, has(c.resources) && has(c.resources.limits) &&
+        'memory' in c.resources.limits)
+      messageExpression: >-
+        'containers without a memory limit: ' + object.spec.containers.filter(c,
+        !(has(c.resources) && has(c.resources.limits) && 'memory' in c.resources.limits))
+        .map(c, c.name).join(', ')

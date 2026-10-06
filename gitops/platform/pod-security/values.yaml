@@ -1,0 +1,24 @@
+# "restricted" installs the baseline and the restricted controls (ADR 0038).
+podSecurityStandard: restricted
+policyType: ValidatingPolicy
+# Fail closed: enforced policies must not be bypassed while Kyverno is unreachable (ADR 0038).
+# The chart has one setting for all policies, so the audit-only restricted policies fail
+# closed too. The webhooks exclude kube-system and kyverno, so the engine can always
+# restart itself; disabling the addon removes the webhooks (verified, ADR 0039).
+failurePolicy: Fail
+# Baseline controls are enforced: the policy reports were clean outside kube-system, which the
+# webhooks exclude. Restricted controls stay in Audit (visibility): many third-party charts
+# do not meet them (ADR 0038).
+validationFailureAction: Audit
+validationFailureActionByPolicy:
+  disallow-capabilities: Enforce
+  disallow-host-namespaces: Enforce
+  disallow-host-path: Enforce
+  disallow-host-ports: Enforce
+  disallow-host-process: Enforce
+  disallow-privileged-containers: Enforce
+  disallow-proc-mount: Enforce
+  disallow-selinux: Enforce
+  restrict-apparmor-profiles: Enforce
+  restrict-seccomp: Enforce
+  restrict-sysctls: Enforce

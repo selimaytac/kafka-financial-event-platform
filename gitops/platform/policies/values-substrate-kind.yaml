@@ -1,0 +1,3 @@
+exceptions:
+  # kind's local-path provisioner creates helper pods with hostPath volumes for every PVC.
+  localPathStorage: true

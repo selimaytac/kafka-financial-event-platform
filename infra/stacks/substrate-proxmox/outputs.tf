@@ -13,6 +13,11 @@ output "endpoint" {
   value = module.cluster.endpoint
 }
 
+output "internal_endpoint" {
+  description = "API server address for services outside the cluster on the lab network (ADR 0040)."
+  value       = module.cluster.endpoint
+}
+
 output "kubeconfig_path" {
   value = module.cluster.kubeconfig_path
 }

@@ -1,0 +1,64 @@
+# One replica per controller in the lab; requests are first estimates, to be replaced by
+# measurements (ADR 0037). Limits are required by require-memory-limits (ADR 0038).
+resources:
+  requests: { cpu: 10m, memory: 64Mi }
+  limits: { memory: 192Mi }
+webhook:
+  resources:
+    requests: { cpu: 10m, memory: 32Mi }
+    limits: { memory: 96Mi }
+certController:
+  resources:
+    requests: { cpu: 10m, memory: 48Mi }
+    limits: { memory: 128Mi }
+
+# Profile-specific paths in OpenBao; set in values-<profile>.yaml.
+openbao:
+  server: https://kfep-openbao:8200
+  profile: ""
+
+extraObjects:
+  # Identity that logs in to OpenBao. OpenBao checks its token with a TokenReview made with
+  # that same token, so it needs system:auth-delegator; no long-lived reviewer token exists.
+  - apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      name: openbao-auth
+      namespace: external-secrets
+  - apiVersion: rbac.authorization.k8s.io/v1
+    kind: ClusterRoleBinding
+    metadata:
+      name: openbao-auth-tokenreview
+    roleRef:
+      apiGroup: rbac.authorization.k8s.io
+      kind: ClusterRole
+      name: system:auth-delegator
+    subjects:
+      - kind: ServiceAccount
+        name: openbao-auth
+        namespace: external-secrets
+  # One store for the cluster: it can read only this profile's KV mount (policy in the
+  # "secrets" stack, role in the bootstrap stack).
+  - apiVersion: external-secrets.io/v1
+    kind: ClusterSecretStore
+    metadata:
+      name: openbao
+    spec:
+      provider:
+        vault:
+          server: "{{ .Values.openbao.server }}"
+          path: "kfep-{{ required \"openbao.profile\" .Values.openbao.profile }}"
+          version: v2
+          # Public lab root CA, created by the bootstrap stack.
+          caProvider:
+            type: ConfigMap
+            name: kfep-root-ca
+            namespace: external-secrets
+            key: ca.crt
+          auth:
+            kubernetes:
+              mountPath: "kubernetes-{{ .Values.openbao.profile }}"
+              role: external-secrets
+              serviceAccountRef:
+                name: openbao-auth
+                namespace: external-secrets

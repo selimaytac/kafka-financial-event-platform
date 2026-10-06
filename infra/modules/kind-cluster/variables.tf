@@ -23,6 +23,23 @@ variable "workers" {
   }
 }
 
+variable "gateway_host_port" {
+  description = "Host port on 127.0.0.1 that reaches the gateway NodePort (ADR 0034: loopback, high port)."
+  type        = number
+}
+
+variable "gateway_node_port" {
+  description = "Fixed NodePort of the gateway Service on kind (values-substrate-kind.yaml)."
+  type        = number
+  default     = 30443
+}
+
+variable "cpu_caps" {
+  description = "CPU cap per node container (Docker --cpus); 0 disables the cap. Protects the host (ADR 0034)."
+  type        = object({ control_plane = number, worker = number })
+  default     = { control_plane = 0, worker = 0 }
+}
+
 variable "kubeconfig_path" {
   description = "Where to write this cluster's kubeconfig (a dedicated file, never the default one)."
   type        = string
