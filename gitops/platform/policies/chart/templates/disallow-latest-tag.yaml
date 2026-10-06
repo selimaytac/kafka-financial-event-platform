@@ -9,7 +9,9 @@ metadata:
       without a tag means "latest" (ADR 0024).
 spec:
   validationActions: [{{ .Values.disallowLatestTag.action | replace "Enforce" "Deny" }}]
-  failurePolicy: Fail
+  # Fail only when enforced: an audit-only policy must not block pods while Kyverno is
+  # down or disabled (ADR 0039).
+  failurePolicy: {{ if eq .Values.disallowLatestTag.action "Enforce" }}Fail{{ else }}Ignore{{ end }}
   matchConstraints:
     resourceRules:
       - apiGroups: [""]

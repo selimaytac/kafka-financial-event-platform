@@ -43,9 +43,10 @@ the memory back when it is turned off, without per-profile copies of the GitOps 
   - Monitors for cert-manager and Kyverno move into the monitoring addon, like those of
     Cilium and Argo CD (amends [0037](0037-measure-and-bound-the-platform-with-kube-prometheus-stack.md)).
   - The Grafana HTTPRoute moves from the gateway chart into the monitoring addon.
-- Kyverno's pod-security webhooks use `failurePolicy: Ignore` while the policies are in
-  Audit, so a stopped or removed Kyverno cannot block pod creation. It returns to `Fail`
-  together with Enforce (Kyverno rollout, ADR 0038).
+- Kyverno policies use `failurePolicy: Ignore` while they are in Audit, so a stopped or
+  removed Kyverno cannot block pod creation. The platform policies derive it from their
+  action (`Fail` only when enforced); pod-security returns to `Fail` together with Enforce
+  (Kyverno rollout, ADR 0038).
 
 ## Consequences
 
