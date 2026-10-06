@@ -13,6 +13,15 @@ service:
   # balancer only sends traffic to nodes that run the proxy.
   externalTrafficPolicy: Local
 
+proxy:
+  # Measured: envoy ~24Mi, shutdown-manager ~22Mi with lab traffic.
+  resources:
+    requests: { cpu: 50m, memory: 64Mi }
+    limits: { memory: 256Mi }
+  shutdownManagerResources:
+    requests: { cpu: 10m, memory: 32Mi }
+    limits: { memory: 64Mi }
+
 routes:
   argocd:
     enabled: true

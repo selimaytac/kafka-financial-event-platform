@@ -9,6 +9,22 @@ spec:
     kubernetes:
       envoyDeployment:
         replicas: 1
+        # The default requests 512Mi for a proxy that uses ~24Mi in the lab; size from
+        # measurement and set limits (ADR 0037, ADR 0038).
+        container:
+          resources:
+            {{- toYaml .Values.proxy.resources | nindent 12 }}
+        # The shutdown manager has no dedicated field; patch the generated Deployment.
+        patch:
+          type: StrategicMerge
+          value:
+            spec:
+              template:
+                spec:
+                  containers:
+                    - name: shutdown-manager
+                      resources:
+                        {{- toYaml .Values.proxy.shutdownManagerResources | nindent 24 }}
       envoyService:
         type: {{ .Values.service.type }}
         externalTrafficPolicy: {{ .Values.service.externalTrafficPolicy }}

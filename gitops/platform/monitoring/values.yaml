@@ -120,6 +120,13 @@ grafana:
       limits: { memory: 96Mi }
 
 prometheusOperator:
+  # Hook Jobs that create and patch the admission webhook certificate; need limits once
+  # require-memory-limits is enforced (ADR 0038).
+  admissionWebhooks:
+    patch:
+      resources:
+        requests: { cpu: 10m, memory: 32Mi }
+        limits: { memory: 64Mi }
   resources:
     requests: { cpu: 20m, memory: 64Mi }
     limits: { memory: 160Mi }
