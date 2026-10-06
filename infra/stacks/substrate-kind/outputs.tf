@@ -18,6 +18,11 @@ output "endpoint" {
   value = module.cluster.endpoint
 }
 
+output "internal_endpoint" {
+  description = "API server address as seen from the kind Docker network (the out-of-cluster secrets store calls it, ADR 0040)."
+  value       = "https://${module.cluster.name}-control-plane:6443"
+}
+
 output "kubeconfig_path" {
   value = module.cluster.kubeconfig_path
 }

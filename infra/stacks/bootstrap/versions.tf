@@ -14,6 +14,10 @@ terraform {
       source  = "hashicorp/random"
       version = "~> 3.9"
     }
+    vault = {
+      source  = "hashicorp/vault" # MPL-2.0; OpenBao serves the same API
+      version = "~> 5.12"
+    }
   }
 
   # Partial configuration: scripts/tofu.sh supplies infra/backend.s3.hcl, the key and the endpoint.

@@ -2,6 +2,8 @@
 component: monitoring
 # Addon: installed only when the profile or ADDONS enables it (ADR 0039).
 tier: addon
+# The Grafana admin login comes from the secrets store (ADR 0040).
+requires: [external-secrets]
 sync: automated
 namespace: monitoring
 chart:
