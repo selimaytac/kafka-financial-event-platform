@@ -335,9 +335,10 @@ tasks:
     silent: true
 
   policies:test:
-    desc: Run behavioural tests for the platform policies with the Kyverno CLI
+    desc: Run behavioural tests for the platform policies, then check every rendered workload against the enforced policies
     cmds:
       - scripts/policies_test.sh
+      - python3 -B scripts/policies_conformance.py
 
   lab:guard:
     desc: "Host circuit breaker: kill the lab's kind nodes if host load, free memory or swap degrade (run during starts)"
