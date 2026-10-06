@@ -2,6 +2,8 @@
 component: kyverno
 # Addon: installed only when the profile or ADDONS enables it (ADR 0039).
 tier: addon
+# Its CRDs are defaulted by the API server; compare server-side (ADR 0036).
+diff: server-side
 sync: automated
 namespace: kyverno
 chart:
