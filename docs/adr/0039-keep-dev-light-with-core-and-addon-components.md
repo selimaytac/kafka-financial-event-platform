@@ -46,7 +46,7 @@ the memory back when it is turned off, without per-profile copies of the GitOps 
 - Kyverno policies use `failurePolicy: Ignore` while they are in Audit, so a stopped or
   removed Kyverno cannot block pod creation. The platform policies derive it from their
   action (`Fail` only when enforced); pod-security returns to `Fail` together with Enforce
-  (Kyverno rollout, ADR 0038).
+  ([0038](0038-enforce-platform-policies-with-kyverno.md)).
 
 ## Consequences
 
@@ -60,3 +60,6 @@ the memory back when it is turned off, without per-profile copies of the GitOps 
   monitoring values as well as in the gateway domain.
 - With Kyverno off, admission policies are not evaluated in `dev`. CI still runs the policy
   tests, and `perf`/`dr` run the full set.
+- Verified: disabling the Kyverno addon removes its pods and webhook configurations, so a
+  `Fail` policy cannot outlive the engine. The namespace (created by Argo CD), the CRDs and
+  the certificates Kyverno generated at runtime remain; they hold no memory.

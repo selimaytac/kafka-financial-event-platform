@@ -1,7 +1,7 @@
 requireMemoryLimits:
-  # Pod limits keep one workload from starving a node (ADR 0037).
-  action: Audit
+  # Pod limits keep one workload from starving a node (ADR 0037). Enforced (ADR 0038).
+  action: Enforce
 disallowLatestTag:
-  action: Audit
+  action: Enforce
 exceptions:
   localPathStorage: false
