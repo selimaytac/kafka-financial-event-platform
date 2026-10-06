@@ -27,6 +27,22 @@
 Drill for L2 without touching other Docker objects: `task lab:drill:docker-reset`, then
 `task lab:restore PROFILE=dev`.
 
+### Circuit breaker during starts
+
+Pod limits protect nodes, not the host. Run `task lab:guard` in a second terminal before
+`lab:start`, `cluster:up` or enabling addons. It measures an idle baseline (30 s), then
+stops this lab's kind nodes (`docker kill`) when any trigger holds for two samples:
+
+| Trigger | Default | Override |
+|---|---|---|
+| Load average above baseline | + 3/4 of the host's CPUs | `GUARD_LOAD_DELTA` |
+| Free memory | below 10 % | `GUARD_MIN_FREE_PCT` |
+| Swap growth since baseline | above 1024 MB | `GUARD_SWAP_GROWTH_MB` |
+
+It runs for 30 minutes (`GUARD_DURATION`) and logs to `guard.log` in the lab data
+directory. After a trip: free host memory first, then `task lab:start`, or start lighter
+([0039](../adr/0039-keep-dev-light-with-core-and-addon-components.md)).
+
 ## Rollback
 
 - L3 keeps the replaced data as `seaweedfs.before-restore-<timestamp>` and the replaced
