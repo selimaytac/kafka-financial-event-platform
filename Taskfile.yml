@@ -174,7 +174,7 @@ tasks:
       - scripts/tofu.sh {{.STACK}} {{.PROFILE | default "-"}} {{.CLI_ARGS}}
 
   cluster:up:
-    desc: "Create or update a cluster end to end: task cluster:up PROFILE=dev [REVISION=main] (-- -auto-approve)"
+    desc: "Create or update a cluster end to end: task cluster:up PROFILE=dev [REVISION=main] [ADDONS=monitoring,kyverno|none] (-- -auto-approve)"
     requires:
       vars: [PROFILE]
     vars:
@@ -194,7 +194,19 @@ tasks:
         fi
         scripts/tofu.sh substrate-kind {{.PROFILE}} apply $extra {{.CLI_ARGS}}
       - scripts/tofu.sh bootstrap {{.PROFILE}} init
-      - scripts/tofu.sh bootstrap {{.PROFILE}} apply -var target_revision={{.REVISION}} {{.CLI_ARGS}}
+      # ADDONS overrides the profile's addon list (ADR 0039): unset keeps the profile default,
+      # "none" means core only.
+      - |
+        addons=()
+        if [ -n "{{.ADDONS}}" ]; then
+          list=""
+          if [ "{{.ADDONS}}" != "none" ]; then
+            IFS=, read -ra names <<< "{{.ADDONS}}"
+            for name in "${names[@]}"; do list="${list:+$list,}\"$name\""; done
+          fi
+          addons=(-var "addons=[$list]")
+        fi
+        scripts/tofu.sh bootstrap {{.PROFILE}} apply -var target_revision={{.REVISION}} "${addons[@]}" {{.CLI_ARGS}}
       - task: argo:adopt
         vars: { PROFILE: "{{.PROFILE}}" }
     interactive: true

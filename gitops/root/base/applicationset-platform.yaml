@@ -1,6 +1,8 @@
-# One Application per gitops/platform/<component>/config.yaml (ADR 0030, ADR 0035).
-# Cluster parameters (profile, substrate, Git revision) come from a single list element;
-# the root Application replaces that element, so they are injected in exactly one place.
+# One Application per selected gitops/platform/<component>/config.yaml (ADR 0030, ADR 0035).
+# Shared by the core and addons overlays (ADR 0039), which set the name, the files list
+# and the deletion behaviour. Cluster parameters (profile, substrate, Git revision) come
+# from a single list element; the root Application replaces that element, so they are
+# injected in exactly one place.
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -9,17 +11,13 @@ metadata:
 spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
-  syncPolicy:
-    # Removing a component directory must not uninstall the CNI or Argo CD by accident.
-    preserveResourcesOnDeletion: true
   generators:
     - matrix:
         generators:
           - git:
               repoURL: https://github.com/selimaytac/kafka-financial-event-platform.git
               revision: REVISION
-              files:
-                - path: gitops/platform/*/config.yaml
+              files: [] # set by each overlay
           - list:
               elements:
                 - profile: PROFILE

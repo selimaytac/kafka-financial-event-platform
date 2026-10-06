@@ -1,5 +1,7 @@
 # Metrics, alerting and dashboards (ADR 0015, ADR 0037).
 component: monitoring
+# Addon: installed only when the profile or ADDONS enables it (ADR 0039).
+tier: addon
 sync: automated
 namespace: monitoring
 chart:

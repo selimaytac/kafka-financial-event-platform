@@ -22,8 +22,9 @@ prometheus:
       requests: { cpu: 100m, memory: 400Mi }
       limits: { memory: 1Gi }
 
-  # Cilium and Argo CD are installed at bootstrap, before monitoring CRDs exist, so their
-  # monitors are owned here instead of by their own charts.
+  # Monitors for every other component are owned here: core components are installed
+  # before (or without) the monitoring CRDs, and addons stay independent (ADR 0037, 0039).
+  # A monitor whose target is not installed simply finds no endpoints.
   additionalPodMonitors:
     - name: cilium-agent
       namespaceSelector: { matchNames: [kube-system] }
@@ -42,6 +43,27 @@ prometheus:
       selector: { matchLabels: { app.kubernetes.io/part-of: argocd } }
       endpoints:
         - port: http-metrics
+    # Same selection as the chart's own monitor: controller, cainjector and webhook. The
+    # target port covers the webhook, whose Service names the metrics port differently.
+    - name: cert-manager
+      namespaceSelector: { matchNames: [cert-manager] }
+      selector:
+        matchExpressions:
+          - { key: app.kubernetes.io/instance, operator: In, values: [cert-manager] }
+          - { key: app.kubernetes.io/component, operator: In, values: [controller, cainjector, webhook] }
+      endpoints:
+        - targetPort: http-metrics
+          interval: 60s
+    - name: kyverno
+      namespaceSelector: { matchNames: [kyverno] }
+      selector:
+        matchExpressions:
+          - { key: app.kubernetes.io/part-of, operator: In, values: [kyverno] }
+          - key: app.kubernetes.io/component
+            operator: In
+            values: [admission-controller, background-controller, cleanup-controller, reports-controller]
+      endpoints:
+        - port: metrics-port
 
 alertmanager:
   config:
@@ -68,6 +90,16 @@ grafana:
     passwordKey: admin-password
   persistence:
     enabled: false
+  # Published through the core gateway (ADR 0035). The route belongs to this addon so the
+  # gateway never points at a Service that may not exist (ADR 0039).
+  route:
+    main:
+      enabled: true
+      hostnames: [grafana.kfep.localhost]
+      parentRefs:
+        - name: platform
+          namespace: envoy-gateway-system
+          sectionName: https
   # First start runs database migrations and loads dashboards, which can take minutes on
   # a busy node. The startup probe holds off liveness until then; without it the liveness
   # probe kills Grafana mid-start (observed).

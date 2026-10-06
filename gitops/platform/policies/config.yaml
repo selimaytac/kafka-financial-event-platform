@@ -1,5 +1,8 @@
 # Platform-specific policies and justified exceptions (ADR 0038).
 component: policies
+# Addon: installed only when the profile or ADDONS enables it (ADR 0039).
+tier: addon
+requires: [kyverno]
 sync: automated
 namespace: kyverno
 chart:

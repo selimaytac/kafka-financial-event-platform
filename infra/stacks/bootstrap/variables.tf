@@ -35,3 +35,14 @@ variable "target_revision" {
   type        = string
   default     = "main"
 }
+
+variable "addons" {
+  description = "Optional components to install (tier: addon, ADR 0039). Profile default; override with task cluster:up ADDONS=a,b."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition     = length(var.addons) == length(distinct(var.addons))
+    error_message = "addons must not contain duplicates."
+  }
+}

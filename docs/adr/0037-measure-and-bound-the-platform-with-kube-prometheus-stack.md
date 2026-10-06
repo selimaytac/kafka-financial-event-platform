@@ -1,6 +1,6 @@
 # 0037. Measure and bound the platform: metrics, alerts and explicit resource limits
 
-- **Status:** Accepted
+- **Status:** Accepted; monitor ownership amended by [0039](0039-keep-dev-light-with-core-and-addon-components.md)
 - **Date:** 2026-09-26
 
 ## Context
@@ -35,6 +35,8 @@ largest ones (etcd, the API server).
   renewal failing (under 14 days left), certificate not ready.
 - Cilium and Argo CD expose metrics endpoints only; their monitors are defined in
   `gitops/platform/monitoring`. Automated components (cert-manager) own their monitors.
+  Amended by [0039](0039-keep-dev-light-with-core-and-addon-components.md): every component
+  exposes metrics only, and all monitors live in the monitoring addon.
 - On kind, etcd, scheduler, controller-manager and kube-proxy targets are disabled
   (`values-substrate-kind.yaml`): they listen on the node's loopback and would only raise
   false alerts.

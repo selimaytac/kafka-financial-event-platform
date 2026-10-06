@@ -4,7 +4,8 @@ crds:
   # Keep CRDs (and therefore every Certificate) if the release is ever removed.
   keep: true
 
-# cert-manager is an automated component with retries, so it can own its ServiceMonitor.
+# Metrics Services only; the ServiceMonitor lives in the monitoring addon, because a core
+# component must not depend on an addon's CRDs (ADR 0039).
 prometheus:
   servicemonitor:
-    enabled: true
+    enabled: false

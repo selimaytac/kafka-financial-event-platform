@@ -155,10 +155,12 @@ task tools:check                      # verify required CLIs
 task setup                            # install git hooks
 task secrets:init                     # create secret zero (back it up!)
 task foundation:apply                 # state store (SeaweedFS) and state bucket
-task cluster:up PROFILE=dev           # kind + Cilium + Argo CD, then GitOps takes over
+task lab:guard                        # optional, second terminal: host circuit breaker
+task cluster:up PROFILE=dev           # kind + Cilium + Argo CD, then GitOps installs the core
+task cluster:up PROFILE=dev ADDONS=monitoring   # add optional components (ADR 0039)
 export KUBECONFIG=~/.kube/kfep-dev.yaml
 task pki:ca-cert                      # export the lab root CA (not trusted system-wide)
-# Argo CD: https://argocd.kfep.localhost:8443   Grafana: https://grafana.kfep.localhost:8443
+# Argo CD: https://argocd.kfep.localhost:8443   Grafana (monitoring): https://grafana.kfep.localhost:8443
 # (curl --cacert <exported root CA>; Grafana admin password: task grafana:password)
 task cluster:down PROFILE=dev         # tear down in reverse order
 ```

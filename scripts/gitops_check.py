@@ -130,6 +130,42 @@ def render_components(workdir: str) -> dict:
     return renders
 
 
+def check_tiers() -> bool:
+    """Core/addon split (ADR 0039): the explicit core list in the root tree must match the
+    configs marked "tier: core", and every requires must name an addon."""
+    configs = {}
+    for config_path in glob.glob("gitops/platform/*/config.yaml"):
+        with open(config_path, encoding="utf-8") as fh:
+            config = yaml.safe_load(fh)
+        configs[config["component"]] = config
+    errors = []
+    for name, config in sorted(configs.items()):
+        if config.get("tier") not in ("core", "addon"):
+            errors.append(f"{name}: tier must be core or addon")
+        for required in config.get("requires", []):
+            if configs.get(required, {}).get("tier") != "addon":
+                errors.append(f"{name}: requires {required}, which is not an addon")
+        if config.get("tier") == "core" and config.get("requires"):
+            errors.append(f"{name}: a core component cannot require anything")
+    with open("gitops/root/core/kustomization.yaml", encoding="utf-8") as fh:
+        overlay = yaml.safe_load(fh)
+    listed = {
+        os.path.basename(os.path.dirname(entry["path"]))
+        for patch in overlay["patches"]
+        for op in yaml.safe_load(patch["patch"])
+        if op["path"].endswith("/git/files")
+        for entry in op["value"]
+    }
+    core = {name for name, config in configs.items() if config.get("tier") == "core"}
+    if listed != core:
+        errors.append(f"core list in gitops/root/core {sorted(listed)} != tier: core {sorted(core)}")
+    for error in errors:
+        print(f"FAIL tiers: {error}")
+    if not errors:
+        print(f"ok   tiers: {len(core)} core, {len(configs) - len(core)} addon")
+    return not errors
+
+
 def main() -> int:
     with tempfile.TemporaryDirectory() as workdir:
         schema_dir = os.path.join(workdir, "schemas")
@@ -139,7 +175,8 @@ def main() -> int:
                 write_crd_schemas(manifests, schema_dir)
         root = subprocess.run(["kubectl", "kustomize", "gitops/root"],
                               capture_output=True, text=True, check=True)
-        ok = kubeconform(root.stdout, "gitops/root", schema_dir)
+        ok = check_tiers()
+        ok &= kubeconform(root.stdout, "gitops/root", schema_dir)
         for label, manifests in renders.items():
             ok &= manifests is not None and kubeconform(manifests, label, schema_dir)
     return 0 if ok else 1

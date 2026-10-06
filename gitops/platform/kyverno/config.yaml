@@ -1,5 +1,7 @@
 # Policy engine (ADR 0013, ADR 0038).
 component: kyverno
+# Addon: installed only when the profile or ADDONS enables it (ADR 0039).
+tier: addon
 sync: automated
 namespace: kyverno
 chart:

@@ -1,5 +1,7 @@
 # Read by the platform ApplicationSet and by the bootstrap stack (single source of truth).
 component: cilium
+# Core: always installed; never depends on an addon (ADR 0039).
+tier: core
 # Manual: a bad change here could stop reconciliation itself (ADR 0033).
 sync: manual
 namespace: kube-system

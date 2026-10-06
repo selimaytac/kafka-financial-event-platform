@@ -49,6 +49,20 @@ locals {
       ])
     }
   }
+
+  # Addons selected for this cluster (ADR 0039). A missing config reads as an empty tier so
+  # that the precondition on the root release reports it instead of file() failing.
+  addons = {
+    for name in var.addons : name => {
+      tier     = try(yamldecode(file("${local.platform}/${name}/config.yaml")).tier, "")
+      requires = try(tolist(yamldecode(file("${local.platform}/${name}/config.yaml")).requires), tolist([]))
+    }
+  }
+  # An empty list would make the generator read every file; a path that matches nothing
+  # keeps the addons ApplicationSet empty.
+  addon_files = length(var.addons) > 0 ? [
+    for name in var.addons : { path = "gitops/platform/${name}/config.yaml" }
+  ] : [{ path = "gitops/platform/none/config.yaml" }]
 }
 
 provider "kubernetes" {
@@ -121,17 +135,26 @@ resource "helm_release" "root" {
           targetRevision = var.target_revision
           path           = "gitops/root"
           kustomize = {
-            patches = [{
-              target = { kind = "ApplicationSet", name = "platform" }
-              patch = yamlencode([
-                { op = "replace", path = "/spec/generators/0/matrix/generators/0/git/revision", value = var.target_revision },
-                {
-                  op    = "replace"
-                  path  = "/spec/generators/0/matrix/generators/1/list/elements/0"
-                  value = { profile = var.profile, substrate = local.cluster.substrate, revision = var.target_revision }
-                },
-              ])
-            }]
+            patches = [
+              {
+                # Both ApplicationSets (core and addons) receive the same cluster parameters.
+                target = { kind = "ApplicationSet", name = "platform-.*" }
+                patch = yamlencode([
+                  { op = "replace", path = "/spec/generators/0/matrix/generators/0/git/revision", value = var.target_revision },
+                  {
+                    op    = "replace"
+                    path  = "/spec/generators/0/matrix/generators/1/list/elements/0"
+                    value = { profile = var.profile, substrate = local.cluster.substrate, revision = var.target_revision }
+                  },
+                ])
+              },
+              {
+                target = { kind = "ApplicationSet", name = "platform-addons" }
+                patch = yamlencode([
+                  { op = "replace", path = "/spec/generators/0/matrix/generators/0/git/files", value = local.addon_files },
+                ])
+              },
+            ]
           }
         }
         destination = {
@@ -144,6 +167,19 @@ resource "helm_release" "root" {
       }
     }
   })]
+
+  lifecycle {
+    precondition {
+      condition     = alltrue([for name, config in local.addons : config.tier == "addon"])
+      error_message = "Every entry in addons must be a component with tier: addon in gitops/platform/<name>/config.yaml."
+    }
+    precondition {
+      condition = alltrue([
+        for name, config in local.addons : alltrue([for required in config.requires : contains(var.addons, required)])
+      ])
+      error_message = "An addon is missing one of its requires; add it to addons as well."
+    }
+  }
 }
 
 # The issuing CA for cert-manager. The namespace is created here because the secret must
