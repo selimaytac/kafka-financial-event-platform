@@ -67,6 +67,8 @@ Namespaces are planned and confirmed in the phase that introduces each component
 | Valkey | Dedup + cache | `apps` | _Phase 4_ | [0011](adr/0011-use-valkey-for-dedup-and-cache.md) |
 | cert-manager | Certificates from the lab intermediate CA | `cert-manager` | `gitops/platform/cert-manager/` | [0035](adr/0035-terminate-tls-at-a-single-gateway-with-a-lab-pki.md) |
 | Envoy Gateway + platform gateway | Single TLS entry point, `*.kfep.localhost` | `envoy-gateway-system` | `gitops/platform/envoy-gateway/`, `gitops/platform/gateway/` | [0014](adr/0014-expose-services-with-gateway-api.md), [0035](adr/0035-terminate-tls-at-a-single-gateway-with-a-lab-pki.md) |
+| OpenBao | Secrets store for every profile, outside the clusters | Docker (host, `kind` network) | `infra/stacks/secrets-store/`, `infra/stacks/secrets/` | [0040](adr/0040-use-an-out-of-cluster-openbao-with-eso.md) |
+| External Secrets Operator | Delivers OpenBao secrets as Kubernetes Secrets (addon) | `external-secrets` | `gitops/platform/external-secrets/` | [0040](adr/0040-use-an-out-of-cluster-openbao-with-eso.md) |
 | Lab PKI | Root CA (outside clusters), per-profile intermediates | OpenTofu state | `infra/stacks/pki/` | [0035](adr/0035-terminate-tls-at-a-single-gateway-with-a-lab-pki.md) |
 | Kyverno | Admission policies (addon) | `kyverno` | `gitops/platform/kyverno/`, `gitops/platform/pod-security/`, `gitops/platform/policies/` | [0013](adr/0013-use-kyverno-for-policy-as-code.md) |
 | kube-prometheus-stack | Metrics, alerts, dashboards; Grafana via the gateway (addon) | `monitoring` | `gitops/platform/monitoring/` | [0015](adr/0015-use-kube-prometheus-stack-for-observability.md), [0037](adr/0037-measure-and-bound-the-platform-with-kube-prometheus-stack.md) |

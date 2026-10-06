@@ -20,7 +20,7 @@
 | L0 | Free resources on the host | `task lab:stop` | ~1.5 min (API server drains watches) |
 | L0/L1 | Resume, also after Docker was quit | `task lab:start` | ~7 s to nodes Ready |
 | L2 | Docker was reset or pruned | `task lab:restore PROFILE=dev` | 280 s to all Applications Synced/Healthy |
-| L3 prevention | Before risky changes, periodically | `task lab:backup` | seconds; archive in `~/platform-labs-backups/` |
+| L3 prevention | Before risky changes, periodically | `task lab:backup` (state store and OpenBao data, ADR 0040) | seconds; archive in `~/platform-labs-backups/` |
 | L3 | State data directory lost or corrupted | `task lab:restore-state -- <archive>`, then `task foundation:apply` | 33 s |
 | L4 | Remove the lab from the machine | `task lab:purge` (asks for confirmation) | — |
 
@@ -50,8 +50,9 @@ directory. After a trip: free host memory first, then `task lab:start`, or start
 
 ## Rollback
 
-- L3 keeps the replaced data as `seaweedfs.before-restore-<timestamp>` and the replaced
-  foundation state files with the same suffix.
+- L3 keeps the replaced data as `seaweedfs.before-restore-<timestamp>` (and
+  `openbao.before-restore-<timestamp>`) and the replaced foundation state files with the
+  same suffix. OpenBao data is only usable with the seal key in the restored state.
 - L4 has no rollback except restoring a backup together with secret zero.
 
 ## Verification

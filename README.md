@@ -78,6 +78,7 @@ were considered and the trade-offs.
 | GitOps | Argo CD with ApplicationSets | Drift detection, self-heal, auditable changes; one directory per component | [0007](docs/adr/0007-use-argo-cd-for-gitops.md), [0030](docs/adr/0030-generate-applications-with-applicationsets.md) |
 | IaC state | SeaweedFS outside the clusters; locking, versioning, encryption | Chosen by a spike: the alternative silently ignored locks | [0025](docs/adr/0025-store-iac-state-in-out-of-cluster-seaweedfs.md) |
 | Secrets bootstrap | One secret zero in the OS keychain; the rest generated | One hand-managed secret; rotation by `apply` | [0026](docs/adr/0026-keep-a-single-secret-zero-in-the-os-keychain.md) |
+| Secrets management | OpenBao outside the clusters, External Secrets Operator inside | Secrets survive rebuilds; Git holds references only; Vault-compatible API (MPL-2.0) | [0040](docs/adr/0040-use-an-out-of-cluster-openbao-with-eso.md) |
 | Repository layout | Layers and stacks; profile chosen explicitly per command | Blast radius per stack; no wrong-workspace accidents | [0027](docs/adr/0027-organise-the-repository-by-layer-and-profile.md) |
 | CNI | Cilium on every substrate, bootstrap-and-adopt | Same NetworkPolicy semantics everywhere; Hubble flow visibility | [0028](docs/adr/0028-use-cilium-as-cni-with-bootstrap-and-adopt.md) |
 | Kubernetes version | 1.35 via the kind provider, pinned by digest | Declarative cluster; a real upgrade path for Phase 8 | [0029](docs/adr/0029-pin-kubernetes-through-the-kind-provider.md) |
@@ -157,7 +158,7 @@ task secrets:init                     # create secret zero (back it up!)
 task foundation:apply                 # state store (SeaweedFS) and state bucket
 task lab:guard                        # optional, second terminal: host circuit breaker
 task cluster:up PROFILE=dev           # kind + Cilium + Argo CD, then GitOps installs the core
-task cluster:up PROFILE=dev ADDONS=monitoring   # add optional components (ADR 0039)
+task cluster:up PROFILE=dev ADDONS=external-secrets,monitoring   # add optional components (ADR 0039)
 export KUBECONFIG=~/.kube/kfep-dev.yaml
 task pki:ca-cert                      # export the lab root CA (not trusted system-wide)
 # Argo CD: https://argocd.kfep.localhost:8443   Grafana (monitoring): https://grafana.kfep.localhost:8443

@@ -34,12 +34,16 @@ addons of a running cluster, re-run step 1 with `ADDONS`; Argo CD installs or re
 | Command | Result |
 |---|---|
 | `task cluster:up PROFILE=dev` | Profile default (`dev`: core only) |
-| `task cluster:up PROFILE=dev ADDONS=monitoring` | Core + monitoring (Grafana, alerts) |
+| `task cluster:up PROFILE=dev ADDONS=external-secrets,monitoring` | Core + monitoring (Grafana, alerts); its login comes from OpenBao |
 | `task cluster:up PROFILE=dev ADDONS=kyverno,pod-security,policies` | Core + policy engine and policies |
 | `task cluster:up PROFILE=dev ADDONS=none` | Core only, also for `perf`/`dr` |
 
-An addon that `requires` another (for example `pod-security` requires `kyverno`) is
-rejected at plan time unless both are listed.
+An addon that `requires` another (for example `pod-security` requires `kyverno`,
+`monitoring` requires `external-secrets`) is rejected at plan time unless both are listed.
+
+`cluster:up` also creates or updates the out-of-cluster secrets store (OpenBao) and its
+data before the bootstrap stack ([0040](../adr/0040-use-an-out-of-cluster-openbao-with-eso.md)).
+`cluster:down` removes only this cluster's access to it; secret values are kept.
 
 ### Remove a cluster
 

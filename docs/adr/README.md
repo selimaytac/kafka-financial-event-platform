@@ -43,3 +43,4 @@ Process: [0001](0001-record-architecture-decisions.md) · Template: [template.md
 | 0037 | [Measure and bound the platform: metrics, alerts and explicit resource limits](0037-measure-and-bound-the-platform-with-kube-prometheus-stack.md) | Accepted |
 | 0038 | [Enforce baseline pod security and platform policies with Kyverno](0038-enforce-platform-policies-with-kyverno.md) | Accepted |
 | 0039 | [Keep dev light: core components always, addons on demand](0039-keep-dev-light-with-core-and-addon-components.md) | Accepted |
+| 0040 | [Keep secrets in an out-of-cluster OpenBao, delivered by External Secrets Operator](0040-use-an-out-of-cluster-openbao-with-eso.md) | Accepted |
