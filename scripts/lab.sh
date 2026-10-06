@@ -54,6 +54,12 @@ start() {
   [[ -n "$cps" ]] && docker start $cps >/dev/null
   [[ -n "$workers" ]] && docker start $workers >/dev/null
   local lbs; lbs=$(lb_containers); [[ -n "$lbs" ]] && docker start $lbs >/dev/null
+  # Every OpenTofu call needs the state store; it starts accepting requests only once healthy.
+  local store_tries=0
+  until [[ "$(docker inspect -f '{{.State.Health.Status}}' platform-state-store 2>/dev/null)" == healthy ]]; do
+    (( ++store_tries > 60 )) && { echo "state store not healthy after 120 s" >&2; exit 1; }
+    sleep 2
+  done
   for cluster in $(kind_nodes | awk '{print $2}' | sort -u); do
     local kubeconfig="$HOME/.kube/${cluster}.yaml"
     echo "waiting for $cluster API server..."

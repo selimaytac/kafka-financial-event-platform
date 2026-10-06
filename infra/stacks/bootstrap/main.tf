@@ -98,16 +98,27 @@ resource "helm_release" "cilium" {
   }
 }
 
+# Owned here, like the other namespaces, so that a rebuilt cluster gets it with its labels.
+resource "kubernetes_namespace_v1" "argocd" {
+  metadata {
+    name = local.components.argocd.config.namespace
+    labels = {
+      "kfep.io/gateway-access" = "true" # Argo CD is published through the gateway (ADR 0038)
+    }
+  }
+
+  depends_on = [helm_release.cilium]
+}
+
 resource "helm_release" "argocd" {
-  name             = "argocd"
-  namespace        = local.components.argocd.config.namespace
-  create_namespace = true
-  repository       = local.components.argocd.config.chart.repoURL
-  chart            = local.components.argocd.config.chart.name
-  version          = local.components.argocd.config.chart.version
-  values           = local.components.argocd.values
-  wait             = true
-  timeout          = 600
+  name       = "argocd"
+  namespace  = kubernetes_namespace_v1.argocd.metadata[0].name
+  repository = local.components.argocd.config.chart.repoURL
+  chart      = local.components.argocd.config.chart.name
+  version    = local.components.argocd.config.chart.version
+  values     = local.components.argocd.values
+  wait       = true
+  timeout    = 600
 
   depends_on = [helm_release.cilium]
 
@@ -223,16 +234,13 @@ resource "kubernetes_namespace_v1" "monitoring" {
   }
 }
 
-# Namespaces allowed to attach routes to the platform gateway (ADR 0038). The argocd
-# namespace is created by the Argo CD release, so only its label is managed here.
-resource "kubernetes_labels" "argocd_gateway_access" {
-  api_version = "v1"
-  kind        = "Namespace"
-  metadata {
-    name = helm_release.argocd.namespace
-  }
-  labels = {
-    "kfep.io/gateway-access" = "true"
+# A label-only resource did not survive a rebuild: its refresh ran before the release had
+# created the namespace, so nothing was planned and the label was missing.
+removed {
+  from = kubernetes_labels.argocd_gateway_access
+
+  lifecycle {
+    destroy = false
   }
 }
 
