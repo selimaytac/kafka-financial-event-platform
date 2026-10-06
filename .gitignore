@@ -41,3 +41,6 @@ vendor/
 
 # Per-profile OpenTofu data directories (scripts/tofu.sh)
 .terraform-*/
+
+# Python bytecode (scripts import each other)
+__pycache__/

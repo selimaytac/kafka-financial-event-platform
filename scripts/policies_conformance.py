@@ -11,7 +11,8 @@ import tempfile
 
 import yaml
 
-import gitops_check
+sys.dont_write_bytecode = True  # importing a sibling script must not leave __pycache__ behind
+import gitops_check  # noqa: E402
 
 # The Kyverno webhooks skip these namespaces, so the engine and the CNI can always start.
 EXCLUDED_NAMESPACES = {"kube-system", "kyverno"}
