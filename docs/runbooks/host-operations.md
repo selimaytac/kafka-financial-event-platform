@@ -35,9 +35,14 @@ stops this lab's kind nodes (`docker kill`) when any trigger holds for two sampl
 
 | Trigger | Default | Override |
 |---|---|---|
-| Load average above baseline | + 3/4 of the host's CPUs | `GUARD_LOAD_DELTA` |
+| Kernel memory pressure (macOS: 1 normal, 2 warn, 4 critical) | critical | `GUARD_MAX_PRESSURE` |
 | Free memory | below 10 % | `GUARD_MIN_FREE_PCT` |
-| Swap growth since baseline | above 1024 MB | `GUARD_SWAP_GROWTH_MB` |
+| Swap growth since baseline | above 3072 MB | `GUARD_SWAP_GROWTH_MB` |
+| Load average above baseline | off | `GUARD_LOAD_DELTA` (e.g. 3/4 of the CPUs) |
+
+Swap growth and load average alone proved noisy on macOS: swap grows while RAM is still
+free, and unrelated host processes spike the load. Memory pressure is the kernel's own
+"about to stall" signal.
 
 It runs for 30 minutes (`GUARD_DURATION`) and logs to `guard.log` in the lab data
 directory. After a trip: free host memory first, then `task lab:start`, or start lighter

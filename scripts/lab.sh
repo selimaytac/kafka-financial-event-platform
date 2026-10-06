@@ -144,6 +144,10 @@ INFO
 # host every few seconds and kills this lab's kind nodes if the host degrades, logging which
 # signal tripped. Thresholds are relative to an idle baseline measured first, and every one
 # can be overridden through the environment.
+# Measured on macOS: swap grows by a GB or more while RAM is still free, and the load average
+# jumps with unrelated host processes (antivirus scans), so both tripped without real danger.
+# The primary signal is the kernel's own memory-pressure level (critical = about to stall);
+# swap growth stays as a coarse backstop and the load trigger is opt-in.
 num() { tr ',' '.'; }  # some locales print decimal commas
 host_load() {
   if [[ "$(uname)" == Darwin ]]; then sysctl -n vm.loadavg | num | awk '{print $2}'
@@ -152,6 +156,11 @@ host_load() {
 host_free_pct() {
   if [[ "$(uname)" == Darwin ]]; then memory_pressure -Q 2>/dev/null | awk -F': ' '/free percentage/ {gsub("%","",$2); print $2}'
   else awk '/MemTotal/ {t=$2} /MemAvailable/ {a=$2} END {printf "%d", a*100/t}' /proc/meminfo; fi
+}
+# macOS kernel memory pressure: 1 normal, 2 warn, 4 critical. Elsewhere: 4 below 5 % available.
+host_pressure() {
+  if [[ "$(uname)" == Darwin ]]; then sysctl -n kern.memorystatus_vm_pressure_level
+  else awk '/MemTotal/ {t=$2} /MemAvailable/ {a=$2} END {print (a*100/t < 5) ? 4 : 1}' /proc/meminfo; fi
 }
 host_swap_used_mb() {
   if [[ "$(uname)" == Darwin ]]; then sysctl -n vm.swapusage | num | sed -E 's/.*used = ([0-9.]+)M.*/\1/' | cut -d. -f1
@@ -167,8 +176,9 @@ kill_lab_nodes() {
 guard() {
   local interval="${GUARD_INTERVAL:-5}" duration="${GUARD_DURATION:-1800}"
   local log="$DATA_DIR/guard.log" cpus; cpus=$(host_cpus)
-  local load_delta="${GUARD_LOAD_DELTA:-$(( cpus * 3 / 4 ))}"
-  local min_free="${GUARD_MIN_FREE_PCT:-10}" swap_growth="${GUARD_SWAP_GROWTH_MB:-1024}"
+  # Load is off unless GUARD_LOAD_DELTA is set (e.g. $(( cpus * 3 / 4 ))).
+  local load_delta="${GUARD_LOAD_DELTA:-100000}" max_pressure="${GUARD_MAX_PRESSURE:-4}"
+  local min_free="${GUARD_MIN_FREE_PCT:-10}" swap_growth="${GUARD_SWAP_GROWTH_MB:-3072}"
   mkdir -p "$DATA_DIR"
   echo "guard: measuring idle baseline (${GUARD_BASELINE_SECONDS:-30}s)..." | tee -a "$log"
   local samples=0 load_sum=0
@@ -180,15 +190,16 @@ guard() {
   base_load=$(awk -v s="$load_sum" -v n="$samples" 'BEGIN {printf "%.1f", s / n}')
   base_swap=$(host_swap_used_mb)
   local max_load; max_load=$(awk -v b="$base_load" -v d="$load_delta" 'BEGIN {print b + d}')
-  echo "guard: baseline load=$base_load swap=${base_swap}MB; trips at load>$max_load, free<${min_free}%, swap>+${swap_growth}MB (2 samples)" | tee -a "$log"
+  echo "guard: baseline load=$base_load swap=${base_swap}MB; trips at pressure>=${max_pressure}, free<${min_free}%, swap>+${swap_growth}MB, load>$max_load (2 samples)" | tee -a "$log"
   local strikes=0 stop=$(( $(date +%s) + duration ))
   while (( $(date +%s) < stop )); do
-    local load free swap reason=""
-    load=$(host_load); free=$(host_free_pct); swap=$(host_swap_used_mb)
-    awk -v l="$load" -v m="$max_load" 'BEGIN {exit !(l > m)}' && reason="load $load > $max_load"
+    local load free swap pressure reason=""
+    load=$(host_load); free=$(host_free_pct); swap=$(host_swap_used_mb); pressure=$(host_pressure)
+    (( pressure >= max_pressure )) && reason="memory pressure level $pressure"
+    awk -v l="$load" -v m="$max_load" 'BEGIN {exit !(l > m)}' && reason="${reason:+$reason; }load $load > $max_load"
     [[ -n "$free" ]] && (( free < min_free )) && reason="${reason:+$reason; }free memory ${free}% < ${min_free}%"
     (( swap - base_swap > swap_growth )) && reason="${reason:+$reason; }swap +$((swap - base_swap))MB"
-    echo "$(date +%H:%M:%S) load=$load free=${free}% swap=${swap}MB ${reason:+[$reason]}" >> "$log"
+    echo "$(date +%H:%M:%S) pressure=$pressure load=$load free=${free}% swap=${swap}MB ${reason:+[$reason]}" >> "$log"
     if [[ -n "$reason" ]]; then strikes=$((strikes + 1)); else strikes=0; fi
     if (( strikes >= 2 )); then
       kill_lab_nodes
